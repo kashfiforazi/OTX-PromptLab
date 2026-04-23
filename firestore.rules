@@ -1,0 +1,77 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isAdmin() {
+      // In a real app we'd check custom claims or an admins collection,
+      // but for this simple setup we check for a specific admin email.
+      return request.auth != null && request.auth.token.email == 'mdkawsarforazi.biz@gmail.com';
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidPrompt(data) {
+      return data.keys().hasAll(['title', 'description', 'promptText', 'category', 'status', 'viewCount', 'copyCount', 'createdAt', 'updatedAt']) 
+        && data.title is string && data.title.size() <= 200
+        && data.description is string && data.description.size() <= 1000
+        && data.promptText is string && data.promptText.size() <= 5000
+        && data.category is string && data.category.size() <= 100
+        && (data.mediaUrl == null || (data.mediaUrl is string && data.mediaUrl.size() <= 1000))
+        && (data.tags == null || (data.tags is list && data.tags.size() <= 20))
+        && data.status in ['pending', 'approved', 'rejected']
+        && data.viewCount is number
+        && data.copyCount is number
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp
+        && (data.isFeatured == null || data.isFeatured is bool)
+        && (data.isTrending == null || data.isTrending is bool);
+    }
+
+    match /prompts/{promptId} {
+      allow get: if isValidId(promptId) && (isAdmin() || existing().status == 'approved');
+      
+      // We allow lists for approved, or for all if admin
+      allow list: if isAdmin() || resource.data.status == 'approved';
+
+      allow create: if isValidId(promptId) && isValidPrompt(incoming()) && (
+        isAdmin() || 
+        (incoming().status == 'pending' 
+         && incoming().viewCount == 0 
+         && incoming().copyCount == 0
+         && incoming().isFeatured == false
+         && incoming().isTrending == false
+        )
+      );
+
+      allow update: if isValidId(promptId) && isValidPrompt(incoming()) && (
+        isAdmin() ||
+        (
+          existing().status == 'approved' &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['viewCount', 'copyCount', 'updatedAt']) &&
+          incoming().viewCount >= existing().viewCount &&
+          incoming().copyCount >= existing().copyCount
+        )
+      );
+
+      allow delete: if isAdmin() && isValidId(promptId);
+    }
+
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

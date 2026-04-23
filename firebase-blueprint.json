@@ -1,0 +1,31 @@
+{
+  "entities": {
+    "Prompt": {
+      "title": "Prompt",
+      "description": "An AI prompt submitted by a user or created by an admin",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "promptText": { "type": "string" },
+        "mediaUrl": { "type": "string" },
+        "category": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "isFeatured": { "type": "boolean" },
+        "isTrending": { "type": "boolean" },
+        "viewCount": { "type": "number" },
+        "copyCount": { "type": "number" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["title", "description", "promptText", "category", "status", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/prompts/{promptId}": {
+      "schema": { "$ref": "#/entities/Prompt" },
+      "description": "Stores all prompts (both pending and approved)"
+    }
+  }
+}

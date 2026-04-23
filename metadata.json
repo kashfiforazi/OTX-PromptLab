@@ -1,0 +1,6 @@
+{
+  "name": "Oentrix PromptLab",
+  "description": "A public AI prompt sharing platform where users can browse, copy, and submit prompts, with an admin panel for approval.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
