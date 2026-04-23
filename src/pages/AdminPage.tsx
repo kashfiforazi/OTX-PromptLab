@@ -3,7 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { signInWithGoogle, logout } from '../services/firebase';
 import { fetchPrompts, updatePromptStatus, deletePrompt, submitPrompt, updatePrompt, getSocialLinks, updateSocialLinks, SocialLinks } from '../services/api';
 import { Prompt } from '../types';
-import { Shield, Loader2, Check, X, LayoutDashboard, LogOut, Star, TrendingUp, Plus, Edit2, Play, Copy, Settings } from 'lucide-react';
+import { Shield, Loader2, Check, X, LayoutDashboard, LogOut, Star, TrendingUp, Plus, Edit2, Play, Copy, Settings, Lock } from 'lucide-react';
 import { db } from '../services/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -19,6 +19,22 @@ export function AdminPage() {
 
   const [socialForm, setSocialForm] = useState<SocialLinks>({ facebook: '', twitter: '', instagram: '', linkedin: '', discord: '', youtube: '', aboutText: '' });
   const [socialLoading, setSocialLoading] = useState(false);
+
+  // Password Logic
+  const [passwordEntered, setPasswordEntered] = useState(() => localStorage.getItem('admin_pass') === 'OTX26');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordInput === 'OTX26') {
+      localStorage.setItem('admin_pass', 'OTX26');
+      setPasswordEntered(true);
+      setPasswordError('');
+    } else {
+      setPasswordError('Incorrect password');
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -64,9 +80,9 @@ export function AdminPage() {
 
   const handleReject = async (id: string) => {
     if (!id) return;
-    if (!confirm("Are you sure you want to reject and delete this submission?")) return;
+    if (!confirm("Are you sure you want to reject this submission? It will be removed from the public view.")) return;
     try {
-      await deletePrompt(id);
+      await updatePromptStatus(id, 'rejected');
       loadData();
     } catch (e) {
       console.error(e);
@@ -168,6 +184,33 @@ export function AdminPage() {
     }
   };
 
+  if (!passwordEntered) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center">
+        <Lock className="w-16 h-16 text-gray-900 dark:text-white mb-6" />
+        <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Admin Panel Check</h1>
+        <p className="mb-6 text-gray-500 max-w-md mx-auto">Please enter the admin password to continue.</p>
+        
+        <form onSubmit={handlePasswordSubmit} className="flex flex-col w-full max-w-xs gap-4">
+          <input
+            type="password"
+            value={passwordInput}
+            onChange={(e) => setPasswordInput(e.target.value)}
+            placeholder="Enter password..."
+            className="px-4 py-3 border border-gray-300 dark:border-white/10 rounded-lg bg-white dark:bg-[#050505] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+            autoFocus
+          />
+          {passwordError && (
+            <p className="text-red-500 text-sm mb-2">{passwordError}</p>
+          )}
+          <button type="submit" className="bg-gray-900 dark:bg-white text-white dark:text-black font-semibold px-6 py-3 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors">
+            Verify Password
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   if (authLoading) return <div className="min-h-[50vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>;
 
   if (!user) {
@@ -194,12 +237,24 @@ export function AdminPage() {
     );
   }
 
+  const handleFullLogout = async () => {
+    localStorage.removeItem('admin_pass');
+    setPasswordEntered(false);
+    await logout();
+  };
+
+  const handleFullLogoutError = async () => {
+    localStorage.removeItem('admin_pass');
+    setPasswordEntered(false);
+    await logout();
+  };
+
   if (!isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center">
         <X className="w-16 h-16 text-red-500 mb-6" />
         <h1 className="text-3xl font-bold mb-4 text-red-600">Access Denied</h1>
-        <button onClick={logout} className="border border-gray-300 text-gray-700 hover:bg-gray-100 font-semibold px-6 py-3 rounded-lg transition-colors">Sign out</button>
+        <button onClick={handleFullLogoutError} className="border border-gray-300 text-gray-700 hover:bg-gray-100 font-semibold px-6 py-3 rounded-lg transition-colors">Sign out</button>
       </div>
     );
   }
@@ -217,7 +272,7 @@ export function AdminPage() {
           <h1 className="text-3xl font-extrabold tracking-tighter text-gray-900 dark:text-white transition-colors duration-300">Admin Portal</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 font-medium transition-colors duration-300">Manage public prompts and moderate community submissions.</p>
         </div>
-        <button onClick={logout} className="flex items-center text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white bg-white dark:bg-white/5 px-4 py-2 rounded border border-gray-200 dark:border-white/10 transition-colors shadow-sm">
+        <button onClick={handleFullLogout} className="flex items-center text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white bg-white dark:bg-white/5 px-4 py-2 rounded border border-gray-200 dark:border-white/10 transition-colors shadow-sm">
           <LogOut className="w-4 h-4 mr-2" /> Sign Out
         </button>
       </div>
@@ -381,7 +436,7 @@ export function AdminPage() {
                         </td>
                         <td className="py-4 px-4 text-right space-x-2">
                            <button onClick={() => startEdit(prompt)} className="p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded transition-colors" title="Edit Prompt"><Edit2 className="w-4 h-4" /></button>
-                           <button onClick={() => { if(confirm('Delete prompt?')) deletePrompt(prompt.id!).then(loadData); }} className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-colors" title="Delete Prompt"><X className="w-4 h-4" /></button>
+                           <button onClick={() => handleReject(prompt.id!)} className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-colors" title="Reject Prompt"><X className="w-4 h-4" /></button>
                         </td>
                       </tr>
                     ))}

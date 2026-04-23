@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { useState, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, Plus, Shield, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../contexts/ThemeContext';
@@ -7,11 +8,38 @@ import { Logo } from './Logo';
 export function Navbar() {
   const { user, isAdmin } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+  
+  const [clickCount, setClickCount] = useState(0);
+  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+    }
+    
+    const newCount = clickCount + 1;
+    
+    if (newCount >= 3) {
+      e.preventDefault();
+      setClickCount(0);
+      navigate('/admin-secret-page');
+    } else {
+      setClickCount(newCount);
+      clickTimeoutRef.current = setTimeout(() => {
+        setClickCount(0);
+      }, 500);
+    }
+  };
 
   return (
-    <header className="relative z-20 h-16 border-b border-gray-200 dark:border-white/10 flex items-center justify-between px-4 sm:px-8 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-md transition-colors duration-300">
-      <Link to="/" className="mr-0 sm:mr-4 shrink-0 flex items-center">
-        <Logo className="scale-90 sm:scale-100" />
+    <header className="relative z-20 min-h-20 py-6 sm:py-4 border-b border-gray-200 dark:border-white/10 flex items-center justify-between px-4 sm:px-8 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-md transition-colors duration-300">
+      <Link 
+        to="/"
+        onClick={handleLogoClick} 
+        className="mr-0 sm:mr-4 shrink-0 flex items-center cursor-pointer"
+      >
+        <Logo className="scale-90 sm:scale-100 pointer-events-none" />
       </Link>
       <div className="flex flex-1 items-center justify-end space-x-4">
         <nav className="flex items-center gap-4 sm:gap-6">

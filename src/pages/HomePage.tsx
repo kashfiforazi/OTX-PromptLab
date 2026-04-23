@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Prompt } from '../types';
 import { fetchPrompts } from '../services/api';
 import { PromptCard } from '../components/PromptCard';
@@ -202,53 +203,56 @@ export function HomePage() {
       </div>
 
       {/* Modal for viewing prompt details */}
-      <AnimatePresence>
-        {selectedPrompt && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 dark:bg-black/80 backdrop-blur-sm"
-               onClick={() => setSelectedPrompt(null)}>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              onClick={e => e.stopPropagation()}
-              className="bg-white dark:bg-black/80 shadow-2xl w-full max-w-3xl rounded-3xl overflow-hidden max-h-[90vh] flex flex-col border border-gray-100 dark:border-white/10 transition-colors duration-300"
-            >
-               {selectedPrompt.mediaUrl && (
-                 <div className="h-64 w-full bg-gray-100 dark:bg-black relative">
-                   {selectedPrompt.mediaUrl.match(/\.(mp4|webm)$/i) ? (
-                     <video src={selectedPrompt.mediaUrl} autoPlay muted loop className="w-full h-full object-cover" />
-                   ) : (
-                     <img src={selectedPrompt.mediaUrl} className="w-full h-full object-cover" />
-                   )}
-                   <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-black via-transparent to-transparent opacity-100" />
-                 </div>
-               )}
-               <div className="p-8 flex-1 overflow-y-auto">
-                 <div className="flex justify-between items-start mb-4">
-                   <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">{selectedPrompt.title}</h2>
-                   <button onClick={() => setSelectedPrompt(null)} className="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 p-2 rounded-full transition-colors">
-                     ✕
-                   </button>
-                 </div>
-                 <div className="flex gap-2 mb-6">
-                   <span className="bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border dark:border-blue-500/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">{selectedPrompt.category}</span>
-                   {selectedPrompt.tags.map(tag => (
-                     <span key={tag} className="bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full text-xs font-medium">#{tag}</span>
-                   ))}
-                 </div>
-                 <p className="text-gray-600 dark:text-gray-400 mb-8 text-base leading-relaxed font-medium">{selectedPrompt.description}</p>
-                 
-                 <div className="mb-6">
-                   <h3 className="text-xs uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3 font-bold">Prompt Text</h3>
-                   <div className="bg-gray-50 dark:bg-black/60 p-6 rounded-2xl border border-gray-200 dark:border-white/10 relative group transition-colors duration-300">
-                     <p className="font-mono text-sm leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{selectedPrompt.promptText}</p>
+      {createPortal(
+        <AnimatePresence>
+          {selectedPrompt && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/40 dark:bg-black/80 backdrop-blur-sm"
+                 onClick={() => setSelectedPrompt(null)}>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                onClick={e => e.stopPropagation()}
+                className="bg-white dark:bg-black/80 shadow-2xl w-full max-w-3xl rounded-3xl overflow-hidden max-h-[90vh] flex flex-col border border-gray-100 dark:border-white/10 transition-colors duration-300"
+              >
+                 {selectedPrompt.mediaUrl && (
+                   <div className="h-64 w-full bg-gray-100 dark:bg-black relative shrink-0">
+                     {selectedPrompt.mediaUrl.match(/\.(mp4|webm)$/i) ? (
+                       <video src={selectedPrompt.mediaUrl} autoPlay muted loop className="w-full h-full object-cover" />
+                     ) : (
+                       <img src={selectedPrompt.mediaUrl} className="w-full h-full object-cover" />
+                     )}
+                     <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-black via-transparent to-transparent opacity-100" />
+                   </div>
+                 )}
+                 <div className="p-8 flex-1 overflow-y-auto">
+                   <div className="flex justify-between items-start mb-4 gap-4">
+                     <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight break-words">{selectedPrompt.title}</h2>
+                     <button onClick={() => setSelectedPrompt(null)} className="shrink-0 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 p-2 rounded-full transition-colors">
+                       ✕
+                     </button>
+                   </div>
+                   <div className="flex flex-wrap gap-2 mb-6">
+                     <span className="bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border dark:border-blue-500/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">{selectedPrompt.category}</span>
+                     {selectedPrompt.tags.map(tag => (
+                       <span key={tag} className="bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full text-xs font-medium">#{tag}</span>
+                     ))}
+                   </div>
+                   <p className="text-gray-600 dark:text-gray-400 mb-8 text-base leading-relaxed font-medium">{selectedPrompt.description}</p>
+                   
+                   <div className="mb-6">
+                     <h3 className="text-xs uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3 font-bold">Prompt Text</h3>
+                     <div className="bg-gray-50 dark:bg-black/60 p-6 rounded-2xl border border-gray-200 dark:border-white/10 relative group transition-colors duration-300">
+                       <p className="font-mono text-sm leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">{selectedPrompt.promptText}</p>
+                     </div>
                    </div>
                  </div>
-               </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

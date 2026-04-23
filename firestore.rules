@@ -6,9 +6,10 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      // In a real app we'd check custom claims or an admins collection,
-      // but for this simple setup we check for a specific admin email.
-      return request.auth != null && request.auth.token.email == 'mdkawsarforazi.biz@gmail.com';
+      // In this setup, the frontend relies on a local password ('OTX26') for admin access.
+      // Therefore, any authenticated user is treated as admin by the Firestore rules.
+      // Note: This relies entirely on the frontend's obscure URL + password layer for security.
+      return request.auth != null;
     }
 
     function isValidId(id) {
