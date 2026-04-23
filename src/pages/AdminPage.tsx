@@ -152,16 +152,44 @@ export function AdminPage() {
     }
   };
 
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  const handleLogin = async () => {
+    setLoginError(null);
+    try {
+      await signInWithGoogle();
+    } catch (err: any) {
+      console.error(err);
+      if (err.code === 'auth/popup-blocked' || err.message?.includes('popup')) {
+        setLoginError('Browser blocked the login popup. If you are in the AI Studio preview, please open the app in a new tab first (icon at top right).');
+      } else {
+        setLoginError(err.message || 'Failed to sign in. Please try again.');
+      }
+    }
+  };
+
   if (authLoading) return <div className="min-h-[50vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>;
 
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center">
         <Shield className="w-16 h-16 text-blue-600 mb-6 animate-pulse" />
-        <h1 className="text-3xl font-bold mb-4 text-gray-900">Admin Access Required</h1>
-        <button onClick={signInWithGoogle} className="bg-white border border-gray-300 text-gray-800 hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 font-semibold px-6 py-3 rounded-lg flex items-center shadow-sm transition-all">
+        <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Admin Access Required</h1>
+        <p className="mb-6 text-gray-500 max-w-md mx-auto">Please sign in with your admin account to manage the platform.</p>
+        
+        {loginError && (
+          <div className="bg-red-50 text-red-600 border border-red-200 p-4 rounded-lg mb-6 max-w-lg text-sm text-center">
+            {loginError}
+          </div>
+        )}
+
+        <button onClick={handleLogin} className="bg-white border border-gray-300 text-gray-800 hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 font-semibold px-6 py-3 rounded-lg flex items-center shadow-sm transition-all mb-4">
           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5 mr-3" /> Sign in with Google
         </button>
+        
+        <p className="text-xs text-gray-400 mt-4 max-w-xs text-center">
+          Note: If the popup doesn't open, please click the "Open in New Tab" icon at the top right of your screen.
+        </p>
       </div>
     );
   }
