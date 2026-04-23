@@ -10,25 +10,34 @@ export function Navbar() {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   
-  const [clickCount, setClickCount] = useState(0);
+  const clickCountRef = useRef(0);
   const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigating to "/" while triple-clicking
+    
     if (clickTimeoutRef.current) {
       clearTimeout(clickTimeoutRef.current);
     }
     
-    const newCount = clickCount + 1;
+    clickCountRef.current += 1;
     
-    if (newCount >= 3) {
-      e.preventDefault();
-      setClickCount(0);
+    if (clickCountRef.current >= 3) {
+      clickCountRef.current = 0;
       navigate('/admin-secret-page');
     } else {
-      setClickCount(newCount);
+      // Re-navigate to home if we are just clicking normally, but wait a tiny bit to check if it's a multi-click?
+      // Actually we are already at home or somewhere else. 
+      // It's better to just let it navigate to home if it isn't a triple click. We'll do it by pushing to "/" if timeout completes without 3 clicks.
+      // But a simpler approach is not to prevent default on the first clicks, but we can't do that synchronously without knowing future clicks.
+      // Let's just prevent default and if it times out, navigate to "/" if it was intended to go to "/".
+      
       clickTimeoutRef.current = setTimeout(() => {
-        setClickCount(0);
-      }, 500);
+        if (clickCountRef.current > 0 && clickCountRef.current < 3) {
+             navigate('/');
+        }
+        clickCountRef.current = 0;
+      }, 400);
     }
   };
 
