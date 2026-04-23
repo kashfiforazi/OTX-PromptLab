@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Copy, Plus, Play, Sparkles, Check, ExternalLink } from 'lucide-react';
 import { Prompt } from '../types';
 import { incrementCopies, incrementViews } from '../services/api';

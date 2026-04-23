@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { signInWithGoogle, logout } from '../services/firebase';
 import { fetchPrompts, updatePromptStatus, deletePrompt, submitPrompt, updatePrompt, getSocialLinks, updateSocialLinks, SocialLinks } from '../services/api';

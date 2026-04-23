@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Prompt } from '../types';
 import { fetchPrompts } from '../services/api';
 import { PromptCard } from '../components/PromptCard';

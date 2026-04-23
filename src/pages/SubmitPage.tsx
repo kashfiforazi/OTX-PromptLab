@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { submitPrompt } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Plus, ArrowLeft, Check } from 'lucide-react';
