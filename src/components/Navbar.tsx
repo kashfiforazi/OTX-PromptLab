@@ -52,7 +52,7 @@ export function Navbar() {
       </Link>
       <div className="flex flex-1 items-center justify-end space-x-4">
         <nav className="flex items-center gap-4 sm:gap-6">
-          <span className="text-sm font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hidden md:block cursor-pointer transition-colors">Explore</span>
+          <Link to="/explore" className="text-sm font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hidden md:block cursor-pointer transition-colors">Explore</Link>
           <span className="text-sm font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hidden md:block cursor-pointer transition-colors">Trending</span>
           
           <button
@@ -65,7 +65,7 @@ export function Navbar() {
 
           <Link
             to="/submit"
-            className="px-4 sm:px-6 py-2 bg-gray-900 dark:bg-white text-white dark:text-black font-semibold rounded-full text-xs sm:text-sm hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors flex items-center gap-2 shadow-sm"
+            className="px-5 sm:px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-full text-xs sm:text-sm hover:from-blue-500 hover:to-indigo-500 transition-all flex items-center gap-2 shadow-[0_0_15px_rgba(37,99,235,0.4)]"
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Submit Prompt</span>

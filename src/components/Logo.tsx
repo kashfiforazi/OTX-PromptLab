@@ -18,7 +18,7 @@ export function Logo({ className, showWordmark = true }: { className?: string, s
 
       {showWordmark && (
         <div className="flex flex-col">
-          <h1 className="text-lg sm:text-xl font-extrabold tracking-tighter leading-none dark:text-gray-100 text-gray-900 flex items-center gap-1.5">
+          <h1 className="text-lg sm:text-xl font-display font-bold tracking-tighter leading-none dark:text-gray-100 text-gray-900 flex items-center gap-1.5">
             <span>PROMPT</span>
             <span className="text-blue-600 dark:text-blue-500">LAB</span>
           </h1>

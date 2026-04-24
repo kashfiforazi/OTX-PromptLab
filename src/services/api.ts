@@ -110,6 +110,14 @@ export interface SocialLinks {
   aboutText?: string;
 }
 
+export interface AdsSettings {
+  googleAdClient?: string;
+  googleAdSlotHead?: string;
+  googleAdSlotSidebar?: string;
+  googleAdSlotFooter?: string;
+  enabled?: boolean;
+}
+
 export async function getSocialLinks(): Promise<SocialLinks> {
   try {
     const docSnap = await getDoc(doc(db, 'settings', 'social'));
@@ -129,5 +137,26 @@ export async function updateSocialLinks(links: SocialLinks) {
     await setDoc(doc(db, 'settings', 'social'), links, { merge: true });
   } catch (error) {
     return handleFirestoreError(error, 'update', 'settings/social');
+  }
+}
+
+export async function getAdsSettings(): Promise<AdsSettings> {
+  try {
+    const docSnap = await getDoc(doc(db, 'settings', 'ads'));
+    if (docSnap.exists()) {
+      return docSnap.data() as AdsSettings;
+    }
+  } catch (error) {
+    console.error("Error fetching ads settings", error);
+  }
+  return {};
+}
+
+export async function updateAdsSettings(settings: AdsSettings) {
+  try {
+    const { setDoc } = await import('firebase/firestore');
+    await setDoc(doc(db, 'settings', 'ads'), settings, { merge: true });
+  } catch (error) {
+    return handleFirestoreError(error, 'update', 'settings/ads');
   }
 }

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { signInWithGoogle, logout } from '../services/firebase';
-import { fetchPrompts, updatePromptStatus, deletePrompt, submitPrompt, updatePrompt, getSocialLinks, updateSocialLinks, SocialLinks } from '../services/api';
+import { fetchPrompts, updatePromptStatus, deletePrompt, submitPrompt, updatePrompt, getSocialLinks, updateSocialLinks, SocialLinks, AdsSettings, getAdsSettings, updateAdsSettings } from '../services/api';
 import { Prompt } from '../types';
-import { Shield, Loader2, Check, X, LayoutDashboard, LogOut, Star, TrendingUp, Plus, Edit2, Play, Copy, Settings, Lock } from 'lucide-react';
+import { Shield, Loader2, Check, X, LayoutDashboard, LogOut, Star, TrendingUp, Plus, Edit2, Play, Copy, Settings, Lock, FileText, Megaphone } from 'lucide-react';
 import { db } from '../services/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -19,6 +19,9 @@ export function AdminPage() {
 
   const [socialForm, setSocialForm] = useState<SocialLinks>({ facebook: '', twitter: '', instagram: '', linkedin: '', discord: '', youtube: '', aboutText: '' });
   const [socialLoading, setSocialLoading] = useState(false);
+
+  const [adsForm, setAdsForm] = useState<AdsSettings>({ googleAdClient: '', googleAdSlotHead: '', googleAdSlotSidebar: '', googleAdSlotFooter: '', enabled: false });
+  const [adsLoading, setAdsLoading] = useState(false);
 
   // Password Logic
   const [passwordEntered, setPasswordEntered] = useState(() => localStorage.getItem('admin_pass') === 'OTX26');
@@ -39,10 +42,11 @@ export function AdminPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [approved, pending, socialData] = await Promise.all([
+      const [approved, pending, socialData, adsData] = await Promise.all([
         fetchPrompts('approved', 1000),
         fetchPrompts('pending', 100),
-        getSocialLinks()
+        getSocialLinks(),
+        getAdsSettings()
       ]);
       setPrompts([...approved, ...pending]);
       if(socialData) {
@@ -54,6 +58,15 @@ export function AdminPage() {
           discord: socialData.discord || '',
           youtube: socialData.youtube || '',
           aboutText: socialData.aboutText || ''
+        });
+      }
+      if(adsData) {
+        setAdsForm({
+          googleAdClient: adsData.googleAdClient || '',
+          googleAdSlotHead: adsData.googleAdSlotHead || '',
+          googleAdSlotSidebar: adsData.googleAdSlotSidebar || '',
+          googleAdSlotFooter: adsData.googleAdSlotFooter || '',
+          enabled: adsData.enabled || false
         });
       }
     } catch (err) {
@@ -168,6 +181,19 @@ export function AdminPage() {
     }
   };
 
+  const handleAdsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdsLoading(true);
+    try {
+      await updateAdsSettings(adsForm);
+      alert('Google Ads settings updated successfully!');
+    } catch(err) {
+      console.error(err);
+    } finally {
+      setAdsLoading(false);
+    }
+  };
+
   const [loginError, setLoginError] = useState<string | null>(null);
 
   const handleLogin = async () => {
@@ -187,52 +213,64 @@ export function AdminPage() {
   if (!passwordEntered) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center">
-        <Lock className="w-16 h-16 text-gray-900 dark:text-white mb-6" />
-        <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Admin Panel Check</h1>
-        <p className="mb-6 text-gray-500 max-w-md mx-auto">Please enter the admin password to continue.</p>
-        
-        <form onSubmit={handlePasswordSubmit} className="flex flex-col w-full max-w-xs gap-4">
-          <input
-            type="password"
-            value={passwordInput}
-            onChange={(e) => setPasswordInput(e.target.value)}
-            placeholder="Enter password..."
-            className="px-4 py-3 border border-gray-300 dark:border-white/10 rounded-lg bg-white dark:bg-[#050505] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-            autoFocus
-          />
-          {passwordError && (
-            <p className="text-red-500 text-sm mb-2">{passwordError}</p>
-          )}
-          <button type="submit" className="bg-gray-900 dark:bg-white text-white dark:text-black font-semibold px-6 py-3 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors">
-            Verify Password
-          </button>
-        </form>
+        <div className="bg-white dark:bg-[#0a0a0a] p-10 rounded-3xl shadow-xl border border-gray-100 dark:border-white/10 w-full max-w-md transition-colors duration-300">
+          <div className="w-20 h-20 bg-gray-100 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Lock className="w-10 h-10 text-gray-900 dark:text-white" />
+          </div>
+          <h1 className="text-3xl font-display font-bold mb-3 text-gray-900 dark:text-white tracking-tight">Admin Portal</h1>
+          <p className="mb-8 text-gray-500 dark:text-gray-400 font-medium">Please authenticate to continue securely.</p>
+          
+          <form onSubmit={handlePasswordSubmit} className="flex flex-col w-full gap-4">
+            <div className="text-left">
+              <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-widest mb-2">Security Key</label>
+              <input
+                type="password"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                placeholder="••••••••"
+                className="w-full px-5 py-4 border border-gray-200 dark:border-white/10 rounded-xl bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all font-mono text-center tracking-widest text-lg"
+                autoFocus
+              />
+            </div>
+            {passwordError && (
+              <p className="text-red-500 text-sm font-medium animate-pulse">{passwordError}</p>
+            )}
+            <button type="submit" className="mt-2 bg-gray-900 dark:bg-white text-white dark:text-black font-bold text-sm tracking-widest uppercase px-6 py-4 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors shadow-md">
+              Verify Access
+            </button>
+          </form>
+        </div>
       </div>
     );
   }
 
-  if (authLoading) return <div className="min-h-[50vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>;
+  if (authLoading) return <div className="min-h-[50vh] flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-blue-600" /></div>;
 
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center">
-        <Shield className="w-16 h-16 text-blue-600 mb-6 animate-pulse" />
-        <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Admin Access Required</h1>
-        <p className="mb-6 text-gray-500 max-w-md mx-auto">Please sign in with your admin account to manage the platform.</p>
-        
-        {loginError && (
-          <div className="bg-red-50 text-red-600 border border-red-200 p-4 rounded-lg mb-6 max-w-lg text-sm text-center">
-            {loginError}
+        <div className="bg-white dark:bg-[#0a0a0a] p-10 rounded-3xl shadow-xl border border-gray-100 dark:border-white/10 w-full max-w-md transition-colors duration-300">
+          <div className="w-20 h-20 bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Shield className="w-10 h-10 text-blue-600 dark:text-blue-400" />
           </div>
-        )}
+          <h1 className="text-3xl font-display font-bold mb-3 text-gray-900 dark:text-white tracking-tight">Identity Required</h1>
+          <p className="mb-8 text-gray-500 dark:text-gray-400 font-medium">Link your Google account to verify admin privileges.</p>
+          
+          {loginError && (
+            <div className="bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 p-4 rounded-xl mb-6 text-sm text-center font-medium">
+              {loginError}
+            </div>
+          )}
 
-        <button onClick={handleLogin} className="bg-white border border-gray-300 text-gray-800 hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 font-semibold px-6 py-3 rounded-lg flex items-center shadow-sm transition-all mb-4">
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5 mr-3" /> Sign in with Google
-        </button>
-        
-        <p className="text-xs text-gray-400 mt-4 max-w-xs text-center">
-          Note: If the popup doesn't open, please click the "Open in New Tab" icon at the top right of your screen.
-        </p>
+          <button onClick={handleLogin} className="w-full bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 text-gray-800 dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 font-semibold px-6 py-4 rounded-xl flex items-center justify-center shadow-sm transition-all mb-4 text-sm mt-2">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5 mr-3" /> 
+            Sign in with Google
+          </button>
+          
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-4 text-center leading-relaxed">
+            Note: If the popup doesn't open, please click the "Open in New Tab" icon at the top right of your screen.
+          </p>
+        </div>
       </div>
     );
   }
@@ -266,32 +304,35 @@ export function AdminPage() {
   const topCopied = [...approvedPrompts].sort((a,b) => b.copyCount - a.copyCount).slice(0, 5);
 
   return (
-    <div className="container max-w-6xl mx-auto px-4 py-8 relative z-10 flex-1">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+    <div className="container max-w-7xl mx-auto px-4 py-8 relative z-10 flex-1">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4 bg-white dark:bg-[#0a0a0a] p-6 sm:p-8 rounded-3xl border border-gray-200 dark:border-white/10 shadow-sm">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tighter text-gray-900 dark:text-white transition-colors duration-300">Admin Portal</h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 font-medium transition-colors duration-300">Manage public prompts and moderate community submissions.</p>
+          <h1 className="text-3xl sm:text-4xl font-display font-extrabold tracking-tight text-gray-900 dark:text-white transition-colors duration-300">Admin Control</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-2 font-medium transition-colors duration-300">Manage your entire AI prompt directory and configuration.</p>
         </div>
-        <button onClick={handleFullLogout} className="flex items-center text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white bg-white dark:bg-white/5 px-4 py-2 rounded border border-gray-200 dark:border-white/10 transition-colors shadow-sm">
-          <LogOut className="w-4 h-4 mr-2" /> Sign Out
+        <button onClick={handleFullLogout} className="flex items-center text-xs font-bold uppercase tracking-widest shrink-0 text-white dark:text-black bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 px-6 py-3 rounded-xl transition-colors shadow-sm">
+          <LogOut className="w-4 h-4 mr-2" /> End Session
         </button>
       </div>
 
-      <div className="flex gap-4 border-b border-gray-200 dark:border-white/10 mb-8 overflow-x-auto pb-2 transition-colors duration-300">
-        <button onClick={() => {setView('dashboard'); setEditPromptId(null);}} className={`px-4 py-3 font-bold text-sm border-b-2 whitespace-nowrap transition-colors ${view === 'dashboard' ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>
-          <span className="flex items-center gap-2"><LayoutDashboard className="w-4 h-4"/> Dashboard</span>
-        </button>
-        <button onClick={() => {setView('submissions'); setEditPromptId(null);}} className={`px-4 py-3 font-bold text-sm border-b-2 whitespace-nowrap flex items-center gap-2 transition-colors ${view === 'submissions' ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>
-          Submissions {pendingPrompts.length > 0 && <span className="bg-red-500 font-black text-white text-[10px] px-2 py-0.5 rounded-full">{pendingPrompts.length}</span>}
-        </button>
-        <button onClick={() => {setView('add'); setEditPromptId(null); setAddForm({ title: '', description: '', promptText: '', mediaUrl: '', category: 'Image', tags: '' });}} className={`px-4 py-3 font-bold text-sm border-b-2 whitespace-nowrap flex items-center gap-2 transition-colors ${view === 'add' ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>
-          <Plus className="w-4 h-4"/> Add Prompt
-        </button>
-        <button onClick={() => {setView('settings'); setEditPromptId(null);}} className={`px-4 py-3 font-bold text-sm border-b-2 whitespace-nowrap flex items-center gap-2 transition-colors ${view === 'settings' ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>
-          <Settings className="w-4 h-4"/> Settings
-        </button>
+      <div className="flex gap-2 mb-8 overflow-x-auto pb-2 transition-colors duration-300 hide-scrollbar">
+        {[
+          { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
+          { id: 'submissions', label: `Queue ${pendingPrompts.length > 0 ? `(${pendingPrompts.length})` : ''}`, icon: FileText },
+          { id: 'add', label: 'Create', icon: Plus },
+          { id: 'settings', label: 'Config', icon: Settings },
+          { id: 'ads', label: 'Monetize', icon: Megaphone }
+        ].map(tab => (
+          <button 
+            key={tab.id}
+            onClick={() => {setView(tab.id as any); setEditPromptId(null); if(tab.id === 'add') setAddForm({ title: '', description: '', promptText: '', mediaUrl: '', category: 'Image', tags: '' });}} 
+            className={`px-5 py-3 font-semibold text-sm rounded-full whitespace-nowrap flex items-center gap-2 transition-all ${view === tab.id ? 'bg-gray-900 dark:bg-white text-white dark:text-black shadow-sm' : 'bg-white dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-200 dark:border-transparent'}`}
+          >
+            <tab.icon className="w-4 h-4"/> {tab.label}
+          </button>
+        ))}
         {view === 'edit' && (
-          <button className="px-4 py-3 font-bold text-sm border-b-2 whitespace-nowrap flex items-center gap-2 transition-colors border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400">
+          <button className="px-5 py-3 font-semibold text-sm rounded-full whitespace-nowrap flex items-center gap-2 transition-all bg-blue-600 text-white shadow-sm shadow-blue-500/30">
             <Edit2 className="w-4 h-4"/> Edit Prompt
           </button>
         )}
@@ -317,6 +358,54 @@ export function AdminPage() {
             
             <button type="submit" disabled={socialLoading} className="bg-gray-900 dark:bg-white text-white dark:text-black py-4 px-6 rounded-xl font-black text-sm tracking-widest uppercase hover:bg-gray-800 dark:hover:bg-gray-200 transition-all w-full mt-6 shadow-sm">
               {socialLoading ? "Saving..." : "Save Settings"}
+            </button>
+          </form>
+        </div>
+      ) : view === 'ads' ? (
+        <div className="bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 p-8 rounded-2xl max-w-3xl shadow-sm relative overflow-hidden transition-colors duration-300">
+          <div className="flex items-center justify-between mb-6 border-b border-gray-200 dark:border-white/10 pb-4">
+             <div>
+               <h2 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">Google Ads Setup</h2>
+               <p className="text-sm text-gray-500 mt-1">Configure your AdSense client ID and ad slots here.</p>
+             </div>
+             <label className="flex items-center cursor-pointer">
+                <div className="relative">
+                  <input type="checkbox" className="sr-only" checked={adsForm.enabled || false} onChange={e => setAdsForm({...adsForm, enabled: e.target.checked})} />
+                  <div className={`block w-14 h-8 rounded-full transition-colors ${adsForm.enabled ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-700'}`}></div>
+                  <div className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${adsForm.enabled ? 'transform translate-x-6' : ''}`}></div>
+                </div>
+                <div className="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">
+                  {adsForm.enabled ? 'Enabled' : 'Disabled'}
+                </div>
+             </label>
+          </div>
+          <form onSubmit={handleAdsSubmit} className="space-y-5 relative z-10">
+            <div>
+              <label className="block text-sm font-bold text-gray-900 dark:text-gray-200 mb-1">Google Ad Client ID (data-ad-client)</label>
+              <input placeholder="ca-pub-XXXXXXXXXXXXX" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={adsForm.googleAdClient || ''} onChange={e => setAdsForm({...adsForm, googleAdClient: e.target.value})} />
+              <p className="text-xs text-gray-500 mt-1">Found in your AdSense code snippet.</p>
+            </div>
+            
+            <div className="pt-4 border-t border-gray-200 dark:border-white/10">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-gray-200 mb-4">Ad Slots (data-ad-slot)</h3>
+              <div className="space-y-4">
+                <div>
+                   <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Top Banner Ad Slot</label>
+                   <input placeholder="1234567890" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={adsForm.googleAdSlotHead || ''} onChange={e => setAdsForm({...adsForm, googleAdSlotHead: e.target.value})} />
+                </div>
+                <div>
+                   <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Sidebar Ad Slot</label>
+                   <input placeholder="0987654321" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={adsForm.googleAdSlotSidebar || ''} onChange={e => setAdsForm({...adsForm, googleAdSlotSidebar: e.target.value})} />
+                </div>
+                <div>
+                   <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Footer/In-feed Ad Slot</label>
+                   <input placeholder="1122334455" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={adsForm.googleAdSlotFooter || ''} onChange={e => setAdsForm({...adsForm, googleAdSlotFooter: e.target.value})} />
+                </div>
+              </div>
+            </div>
+            
+            <button type="submit" disabled={adsLoading} className="bg-gray-900 dark:bg-white text-white dark:text-black py-4 px-6 rounded-xl font-black text-sm tracking-widest uppercase hover:bg-gray-800 dark:hover:bg-gray-200 transition-all w-full mt-6 shadow-sm">
+              {adsLoading ? "Saving..." : "Save Ads Setup"}
             </button>
           </form>
         </div>
@@ -406,37 +495,40 @@ export function AdminPage() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 p-8 rounded-2xl overflow-x-auto shadow-sm transition-colors duration-300">
-              <h2 className="text-xl font-bold mb-6 tracking-tight text-gray-900 dark:text-white">Manage Approved Prompts</h2>
+              <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 p-4 sm:p-8 rounded-3xl overflow-x-auto shadow-sm transition-colors duration-300">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-xl font-display font-bold tracking-tight text-gray-900 dark:text-white">Active Directory</h2>
+                <span className="bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full text-xs font-bold">{approvedPrompts.length} Items</span>
+              </div>
               <table className="w-full text-left whitespace-nowrap">
                   <thead>
                     <tr className="text-[10px] uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-white/10">
-                      <th className="pb-4 px-4 font-bold">Title & Description</th>
+                      <th className="pb-4 px-4 font-bold">Details</th>
                       <th className="pb-4 px-4 font-bold">Metrics</th>
-                      <th className="pb-4 px-4 text-center font-bold">Visibility Flags</th>
+                      <th className="pb-4 px-4 text-center font-bold">Tags</th>
                       <th className="pb-4 px-4 text-right font-bold">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {approvedPrompts.map(prompt => (
-                      <tr key={prompt.id} className="border-b border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
-                        <td className="py-4 px-4 max-w-[250px] truncate">
-                          <div className="font-bold text-sm text-gray-900 dark:text-gray-200 mb-1">{prompt.title}</div>
+                      <tr key={prompt.id} className="border-b border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group">
+                        <td className="py-5 px-4 max-w-[250px] sm:max-w-[350px] truncate">
+                          <div className="font-display font-bold text-[15px] text-gray-900 dark:text-white mb-1 tracking-tight">{prompt.title}</div>
                           <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{prompt.description}</div>
                         </td>
-                        <td className="py-4 px-4">
-                          <div className="text-xs font-mono text-gray-600 dark:text-gray-300 font-semibold">{prompt.copyCount} COPIES</div>
-                          <div className="text-[10px] uppercase text-gray-400 dark:text-gray-500 mt-1">{prompt.viewCount} VIEWS</div>
+                        <td className="py-5 px-4">
+                          <div className="text-xs font-mono text-gray-600 dark:text-gray-300 font-semibold flex items-center gap-1.5"><Copy className="w-3.5 h-3.5"/> {prompt.copyCount}</div>
+                          <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1.5"><Play className="w-3.5 h-3.5"/> {prompt.viewCount}</div>
                         </td>
-                        <td className="py-4 px-4">
+                        <td className="py-5 px-4">
                           <div className="flex gap-2 justify-center">
-                            <button onClick={() => toggleFlag(prompt.id!, 'isFeatured', prompt.isFeatured)} className={`p-2 rounded border transition-colors ${prompt.isFeatured ? 'bg-yellow-50 dark:bg-yellow-500/10 text-yellow-600 dark:text-yellow-500 border-yellow-200 dark:border-yellow-500/30' : 'bg-transparent text-gray-400 dark:text-gray-500 border-transparent hover:bg-gray-100 dark:hover:bg-white/10'}`} title="Toggle Featured"><Star className="w-4 h-4"/></button>
-                            <button onClick={() => toggleFlag(prompt.id!, 'isTrending', prompt.isTrending)} className={`p-2 rounded border transition-colors ${prompt.isTrending ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-500 border-blue-200 dark:border-blue-500/30' : 'bg-transparent text-gray-400 dark:text-gray-500 border-transparent hover:bg-gray-100 dark:hover:bg-white/10'}`} title="Toggle Trending"><TrendingUp className="w-4 h-4"/></button>
+                            <button onClick={() => toggleFlag(prompt.id!, 'isFeatured', prompt.isFeatured)} className={`p-2 rounded border transition-all ${prompt.isFeatured ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-white border-transparent shadow-md' : 'bg-transparent text-gray-400 dark:text-gray-500 border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/10'}`} title="Toggle Featured"><Star className={`w-4 h-4 ${prompt.isFeatured ? 'fill-white' : ''}`}/></button>
+                            <button onClick={() => toggleFlag(prompt.id!, 'isTrending', prompt.isTrending)} className={`p-2 rounded border transition-all ${prompt.isTrending ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white border-transparent shadow-md' : 'bg-transparent text-gray-400 dark:text-gray-500 border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/10'}`} title="Toggle Trending"><TrendingUp className="w-4 h-4"/></button>
                           </div>
                         </td>
-                        <td className="py-4 px-4 text-right space-x-2">
-                           <button onClick={() => startEdit(prompt)} className="p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded transition-colors" title="Edit Prompt"><Edit2 className="w-4 h-4" /></button>
-                           <button onClick={() => handleReject(prompt.id!)} className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-colors" title="Reject Prompt"><X className="w-4 h-4" /></button>
+                        <td className="py-5 px-4 text-right space-x-2">
+                           <button onClick={() => startEdit(prompt)} className="p-2 text-gray-400 dark:text-gray-500 hover:text-white hover:bg-gray-900 dark:hover:bg-white dark:hover:text-black rounded-lg border border-transparent hover:border-gray-900 dark:hover:border-white transition-all shadow-sm" title="Edit Prompt"><Edit2 className="w-4 h-4" /></button>
+                           <button onClick={() => handleReject(prompt.id!)} className="p-2 text-gray-400 dark:text-gray-500 hover:text-white hover:bg-red-600 rounded-lg border border-transparent hover:border-red-600 transition-all shadow-sm" title="Reject Prompt"><X className="w-4 h-4" /></button>
                         </td>
                       </tr>
                     ))}
