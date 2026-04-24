@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Prompt } from '../types';
-import { fetchPrompts } from '../services/api';
+import { fetchPrompts, getBanners, Banner } from '../services/api';
 import { PromptCard } from '../components/PromptCard';
-import { Sparkles, Search, Loader2, ExternalLink } from 'lucide-react';
+import { Sparkles, Search, Loader2, ExternalLink, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAds } from '../contexts/AdsContext';
 import { AdSense } from '../components/AdSense';
+import { SaveButton } from '../components/SaveButton';
 
 export function HomePage() {
   const { settings: adsSettings } = useAds();
   const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -18,17 +20,21 @@ export function HomePage() {
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
 
   useEffect(() => {
-    async function loadPrompts() {
+    async function loadData() {
       try {
-        const data = await fetchPrompts('approved');
-        setPrompts(data);
+        const [promptsData, bannersData] = await Promise.all([
+          fetchPrompts('approved'),
+          getBanners()
+        ]);
+        setPrompts(promptsData);
+        setBanners(bannersData.filter(b => b.imageUrl)); // Only keep valid banners
       } catch (err) {
         console.error(err);
       } finally {
         setLoading(false);
       }
     }
-    loadPrompts();
+    loadData();
   }, []);
 
   const categories = Array.from(new Set(prompts.map(p => p.category)));
@@ -47,19 +53,42 @@ export function HomePage() {
   return (
     <div className="min-h-screen pb-20">
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-24 flex justify-center text-center bg-gray-50 dark:bg-[#000000] border-b border-gray-200 dark:border-white/10 mb-12 transition-colors duration-300">
+      <section className="relative overflow-hidden pt-2 pb-12 md:pt-4 md:pb-16 flex justify-center text-center bg-gray-50 dark:bg-[#000000] border-b border-gray-200 dark:border-white/10 mb-8 transition-colors duration-300">
         <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#ffffff22_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-50" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-gray-50 dark:to-black" />
         
-        <div className="container max-w-4xl px-4 relative z-10 flex flex-col items-center">
+        <div className="container max-w-7xl px-4 relative z-10 flex flex-col items-center">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center rounded-full border border-blue-200/50 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/10 px-4 py-1.5 text-xs font-semibold text-blue-700 dark:text-blue-400 mb-8 backdrop-blur-sm transition-colors duration-300 tracking-wide uppercase"
+            className="inline-flex items-center rounded-full border border-blue-200/50 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/10 px-4 py-1.5 text-xs font-semibold text-blue-700 dark:text-blue-400 mb-5 backdrop-blur-sm transition-colors duration-300 tracking-wide uppercase"
           >
             <Sparkles className="mr-2 h-3.5 w-3.5" />
             <span>Welcome to the future of AI</span>
           </motion.div>
+
+          {/* Dynamic Banners */}
+          {banners.length > 0 && !searchTerm && !selectedCategory && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 w-full">
+              {banners.map((banner, index) => (
+                <a 
+                  key={index} 
+                  href={banner.link || '#'} 
+                  target={banner.link?.startsWith('http') ? '_blank' : '_self'} 
+                  rel="noopener noreferrer"
+                  className="group relative h-40 md:h-48 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 block"
+                >
+                  <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+                  {banner.title && (
+                    <div className="absolute bottom-5 left-5 right-5">
+                      <h3 className="text-white font-display font-bold text-xl leading-tight drop-shadow-md text-left">{banner.title}</h3>
+                    </div>
+                  )}
+                </a>
+              ))}
+            </div>
+          )}
           
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
@@ -246,6 +275,7 @@ export function HomePage() {
                    <div className="flex justify-between items-start mb-4 gap-4 relative">
                      <h2 className="text-3xl md:text-4xl font-display font-extrabold text-gray-900 dark:text-white tracking-tight break-words">{selectedPrompt.title}</h2>
                      <div className="flex gap-2">
+                       <SaveButton promptId={selectedPrompt.id!} className="shrink-0 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 p-2.5 rounded-full" />
                        <button 
                          onClick={() => window.open(`/prompt/${selectedPrompt.id}`, '_blank')}
                          className="shrink-0 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 p-2.5 rounded-full transition-colors"

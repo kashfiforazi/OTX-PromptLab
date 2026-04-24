@@ -20,12 +20,25 @@
         "updatedAt": { "type": "number" }
       },
       "required": ["title", "description", "promptText", "category", "status", "createdAt", "updatedAt"]
+    },
+    "SavedPrompt": {
+      "title": "SavedPrompt",
+      "description": "A prompt saved by a user",
+      "type": "object",
+      "properties": {
+        "savedAt": { "type": "number" }
+      },
+      "required": ["savedAt"]
     }
   },
   "firestore": {
     "/prompts/{promptId}": {
       "schema": { "$ref": "#/entities/Prompt" },
       "description": "Stores all prompts (both pending and approved)"
+    },
+    "/users/{userId}/savedPrompts/{promptId}": {
+      "schema": { "$ref": "#/entities/SavedPrompt" },
+      "description": "User's saved prompts"
     }
   }
 }

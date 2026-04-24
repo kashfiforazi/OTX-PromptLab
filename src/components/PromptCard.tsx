@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-import { Copy, Plus, Play, Sparkles, Check, ExternalLink } from 'lucide-react';
+import { Copy, Plus, Play, Sparkles, Check, ExternalLink, Share2 } from 'lucide-react';
 import { Prompt } from '../types';
 import { incrementCopies, incrementViews } from '../services/api';
 import { cn } from '../lib/utils';
 import { motion } from 'framer-motion';
+import { SaveButton } from './SaveButton';
 
 interface Props {
   prompt: Prompt;
   onClick?: () => void;
 }
 
-export function PromptCard({ prompt, onClick }: Props) {
+export const PromptCard: React.FC<Props> = ({ prompt, onClick }) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async (e: React.MouseEvent) => {
@@ -30,13 +31,39 @@ export function PromptCard({ prompt, onClick }: Props) {
     if (onClick) onClick();
   };
 
+  const [shareCopied, setShareCopied] = useState(false);
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(window.location.origin + '/prompt/' + prompt.id);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch (err) {}
+  };
+
   return (
       <motion.div
         whileHover={{ y: -5 }}
         whileTap={{ scale: 0.98 }}
-        className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 flex flex-col rounded-2xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-xl dark:shadow-none transition-all duration-300"
+        className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 flex flex-col rounded-2xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-xl dark:shadow-none transition-all duration-300 relative"
         onClick={handleCardClick}
       >
+        <div className="absolute top-3 right-3 z-20 flex gap-2">
+           <button 
+             onClick={handleShare}
+             title={shareCopied ? "Copied!" : "Share link"}
+             className={`p-2.5 rounded-full transition-all flex items-center justify-center border shadow-sm backdrop-blur-md ${
+               shareCopied 
+                 ? 'bg-green-100 dark:bg-green-500/30 text-green-600 dark:text-green-400 border-green-200 dark:border-green-500/40' 
+                 : 'bg-white/80 dark:bg-black/50 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/20 border-gray-300 dark:border-white/20'
+             }`}
+           >
+             {shareCopied ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
+           </button>
+           <SaveButton promptId={prompt.id!} className="" />
+        </div>
+        
         {prompt.mediaUrl && (
           <div className="relative w-full overflow-hidden bg-gray-100 dark:bg-black" style={{ aspectRatio: '1.91 / 1' }}>
             {prompt.mediaUrl.match(/\.(mp4|webm)$/i) ? (

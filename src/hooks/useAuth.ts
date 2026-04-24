@@ -1,24 +1,10 @@
-import { useState, useEffect } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '../services/firebase';
+import { useAuth as useAuthContext } from '../contexts/AuthContext';
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading, signIn, signInWithEmail, signUpWithEmail, logOut } = useAuthContext();
+  
+  // Real check based on email configured in rules
+  const isAdmin = user != null && user.email === 'mdkawsarforazi.biz@gmail.com';
 
-  // Since the user requested any Gmail to work after entering the frontend password,
-  // we consider any logged-in user as an admin to the UI.
-  // The AdminPage itself still requires the 'OTX26' password to be entered.
-  const isAdmin = user != null;
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  return { user, loading, isAdmin };
+  return { user, loading, isAdmin, signIn, signInWithEmail, signUpWithEmail, logOut };
 }

@@ -160,3 +160,56 @@ export async function updateAdsSettings(settings: AdsSettings) {
     return handleFirestoreError(error, 'update', 'settings/ads');
   }
 }
+
+export interface SiteSettings {
+  logoUrl?: string;
+  siteName?: string;
+}
+
+export async function getSiteSettings(): Promise<SiteSettings> {
+  try {
+    const docSnap = await getDoc(doc(db, 'settings', 'site'));
+    if (docSnap.exists()) {
+      return docSnap.data() as SiteSettings;
+    }
+  } catch (error) {
+    console.error("Error fetching site settings", error);
+  }
+  return {};
+}
+
+export async function updateSiteSettings(settings: SiteSettings) {
+  try {
+    const { setDoc } = await import('firebase/firestore');
+    await setDoc(doc(db, 'settings', 'site'), settings, { merge: true });
+  } catch (error) {
+    return handleFirestoreError(error, 'update', 'settings/site');
+  }
+}
+
+export interface Banner {
+  imageUrl: string;
+  link: string;
+  title: string;
+}
+
+export async function getBanners(): Promise<Banner[]> {
+  try {
+    const docSnap = await getDoc(doc(db, 'settings', 'banners'));
+    if (docSnap.exists()) {
+      return (docSnap.data().items || []) as Banner[];
+    }
+  } catch (error) {
+    console.error("Error fetching banners", error);
+  }
+  return [];
+}
+
+export async function updateBanners(banners: Banner[]) {
+  try {
+    const { setDoc } = await import('firebase/firestore');
+    await setDoc(doc(db, 'settings', 'banners'), { items: banners }, { merge: true });
+  } catch (error) {
+    return handleFirestoreError(error, 'update', 'settings/banners');
+  }
+}

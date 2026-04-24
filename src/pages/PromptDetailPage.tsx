@@ -8,6 +8,8 @@ import { AdSense } from '../components/AdSense';
 import { db } from '../services/firebase';
 import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
 
+import { SaveButton } from '../components/SaveButton';
+
 export function PromptDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -64,10 +66,13 @@ export function PromptDetailPage() {
     }
   };
 
+  const [shareCopied, setShareCopied] = useState(false);
+
   const handleShare = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      alert('Link copied to clipboard!');
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
     } catch (err) {}
   };
 
@@ -116,11 +121,14 @@ export function PromptDetailPage() {
           )}
           
           <div className={`p-8 md:p-12 ${prompt.mediaUrl ? '-mt-10 md:-mt-16 relative z-10' : ''}`}>
-            <div className="flex flex-wrap gap-2 mb-6">
-              <span className="bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">{prompt.category}</span>
-              {prompt.tags.map(tag => (
-                <span key={tag} className="bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-white/10 px-3 py-1 rounded-full text-xs font-medium">#{tag}</span>
-              ))}
+            <div className="flex items-start justify-between flex-wrap gap-4 mb-6">
+              <div className="flex flex-wrap gap-2">
+                <span className="bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">{prompt.category}</span>
+                {prompt.tags.map(tag => (
+                  <span key={tag} className="bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-white/10 px-3 py-1 rounded-full text-xs font-medium">#{tag}</span>
+                ))}
+              </div>
+              <SaveButton promptId={prompt.id!} className="bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 border border-gray-200 dark:border-white/10 px-4 py-2 rounded-full font-bold uppercase tracking-widest text-xs" />
             </div>
             
             <h1 className="text-3xl md:text-5xl font-display font-bold text-gray-900 dark:text-white tracking-tight mb-6">{prompt.title}</h1>
@@ -138,9 +146,10 @@ export function PromptDetailPage() {
                 <div className="flex gap-2">
                   <button 
                     onClick={handleShare}
-                    className="flex items-center gap-2 text-xs font-bold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 px-4 py-2 rounded-xl transition-colors uppercase tracking-wider"
+                    className={`flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl transition-colors uppercase tracking-wider ${shareCopied ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10' : 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20'}`}
                   >
-                    <Share2 className="w-4 h-4" /> Share
+                    {shareCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+                    {shareCopied ? 'Copied' : 'Share'}
                   </button>
                   <button 
                     onClick={handleCopy}

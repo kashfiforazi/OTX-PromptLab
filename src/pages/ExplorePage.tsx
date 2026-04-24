@@ -6,9 +6,11 @@ import { Search, Loader2, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAds } from '../contexts/AdsContext';
 import { AdSense } from '../components/AdSense';
+import { useNavigate } from 'react-router-dom';
 
 export function ExplorePage() {
   const { settings: adsSettings } = useAds();
+  const navigate = useNavigate();
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -106,7 +108,7 @@ export function ExplorePage() {
                     exit={{ opacity: 0, scale: 0.9 }}
                     layout
                   >
-                    <PromptCard prompt={prompt} />
+                    <PromptCard prompt={prompt} onClick={() => navigate(`/prompt/${prompt.id}`)} />
                   </motion.div>
                 ))}
               </AnimatePresence>

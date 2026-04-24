@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { signInWithGoogle, logout } from '../services/firebase';
-import { fetchPrompts, updatePromptStatus, deletePrompt, submitPrompt, updatePrompt, getSocialLinks, updateSocialLinks, SocialLinks, AdsSettings, getAdsSettings, updateAdsSettings } from '../services/api';
+import { fetchPrompts, updatePromptStatus, deletePrompt, submitPrompt, updatePrompt, getSocialLinks, updateSocialLinks, SocialLinks, AdsSettings, getAdsSettings, updateAdsSettings, getBanners, updateBanners, Banner, SiteSettings, getSiteSettings, updateSiteSettings } from '../services/api';
 import { Prompt } from '../types';
-import { Shield, Loader2, Check, X, LayoutDashboard, LogOut, Star, TrendingUp, Plus, Edit2, Play, Copy, Settings, Lock, FileText, Megaphone } from 'lucide-react';
+import { Shield, Loader2, Check, X, LayoutDashboard, LogOut, Star, TrendingUp, Plus, Edit2, Play, Copy, Settings, Lock, FileText, Megaphone, Image as ImageIcon, Trash2, EyeOff } from 'lucide-react';
 import { db } from '../services/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -11,7 +11,7 @@ export function AdminPage() {
   const { user, loading: authLoading, isAdmin } = useAuth();
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<'dashboard' | 'submissions' | 'add' | 'edit' | 'settings'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'submissions' | 'add' | 'edit' | 'settings' | 'ads' | 'banners'>('dashboard');
 
   const [addForm, setAddForm] = useState({ title: '', description: '', promptText: '', mediaUrl: '', category: 'Image', tags: '' });
   const [addLoading, setAddLoading] = useState(false);
@@ -20,10 +20,21 @@ export function AdminPage() {
   const [socialForm, setSocialForm] = useState<SocialLinks>({ facebook: '', twitter: '', instagram: '', linkedin: '', discord: '', youtube: '', aboutText: '' });
   const [socialLoading, setSocialLoading] = useState(false);
 
+  const [siteForm, setSiteForm] = useState<SiteSettings>({ logoUrl: '', siteName: '' });
+  const [siteLoading, setSiteLoading] = useState(false);
+
   const [adsForm, setAdsForm] = useState<AdsSettings>({ googleAdClient: '', googleAdSlotHead: '', googleAdSlotSidebar: '', googleAdSlotFooter: '', enabled: false });
   const [adsLoading, setAdsLoading] = useState(false);
+  
+  const [banners, setBanners] = useState<Banner[]>([
+    { title: '', link: '', imageUrl: '' },
+    { title: '', link: '', imageUrl: '' },
+    { title: '', link: '', imageUrl: '' }
+  ]);
+  const [bannersLoading, setBannersLoading] = useState(false);
 
   // Password Logic
+
   const [passwordEntered, setPasswordEntered] = useState(() => localStorage.getItem('admin_pass') === 'OTX26');
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -42,11 +53,13 @@ export function AdminPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [approved, pending, socialData, adsData] = await Promise.all([
-        fetchPrompts('approved', 1000),
-        fetchPrompts('pending', 100),
+      const [approved, pending, socialData, adsData, bannersData, siteData] = await Promise.all([
+        fetchPrompts('approved', 100),
+        fetchPrompts('pending', 50),
         getSocialLinks(),
-        getAdsSettings()
+        getAdsSettings(),
+        getBanners(),
+        getSiteSettings()
       ]);
       setPrompts([...approved, ...pending]);
       if(socialData) {
@@ -69,6 +82,18 @@ export function AdminPage() {
           enabled: adsData.enabled || false
         });
       }
+      if(siteData) {
+        setSiteForm({
+          logoUrl: siteData.logoUrl || '',
+          siteName: siteData.siteName || ''
+        });
+      }
+      if(bannersData && bannersData.length > 0) {
+        // Pad to ensure we always have 3 inputs
+        const paddedBanners = [...bannersData];
+        while(paddedBanners.length < 3) paddedBanners.push({ title: '', link: '', imageUrl: '' });
+        setBanners(paddedBanners.slice(0, 3));
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -81,6 +106,32 @@ export function AdminPage() {
     else setLoading(false);
   }, [isAdmin]);
 
+  const handleBannersSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBannersLoading(true);
+    try {
+      await updateBanners(banners.filter(b => b.imageUrl)); // Only save banners with an image
+      alert('Banners updated successfully!');
+    } catch(err) {
+      console.error(err);
+    } finally {
+      setBannersLoading(false);
+    }
+  };
+
+  const handleSiteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSiteLoading(true);
+    try {
+      await updateSiteSettings(siteForm);
+      // alert removed to support iframe
+    } catch(err) {
+      console.error(err);
+    } finally {
+      setSiteLoading(false);
+    }
+  };
+
   const handleApprove = async (id: string) => {
     if (!id) return;
     try {
@@ -91,9 +142,18 @@ export function AdminPage() {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    if (!id) return;
+    try {
+      await deletePrompt(id);
+      loadData();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleReject = async (id: string) => {
     if (!id) return;
-    if (!confirm("Are you sure you want to reject this submission? It will be removed from the public view.")) return;
     try {
       await updatePromptStatus(id, 'rejected');
       loadData();
@@ -202,6 +262,9 @@ export function AdminPage() {
       await signInWithGoogle();
     } catch (err: any) {
       console.error(err);
+      if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
+        return;
+      }
       if (err.code === 'auth/popup-blocked' || err.message?.includes('popup')) {
         setLoginError('Browser blocked the login popup. If you are in the AI Studio preview, please open the app in a new tab first (icon at top right).');
       } else {
@@ -321,7 +384,8 @@ export function AdminPage() {
           { id: 'submissions', label: `Queue ${pendingPrompts.length > 0 ? `(${pendingPrompts.length})` : ''}`, icon: FileText },
           { id: 'add', label: 'Create', icon: Plus },
           { id: 'settings', label: 'Config', icon: Settings },
-          { id: 'ads', label: 'Monetize', icon: Megaphone }
+          { id: 'ads', label: 'Monetize', icon: Megaphone },
+          { id: 'banners', label: 'Banners', icon: ImageIcon }
         ].map(tab => (
           <button 
             key={tab.id}
@@ -340,26 +404,78 @@ export function AdminPage() {
 
       {loading ? (
         <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 text-blue-600 animate-spin" /></div>
-      ) : view === 'settings' ? (
+      ) : view === 'banners' ? (
         <div className="bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 p-8 rounded-2xl max-w-3xl shadow-sm relative overflow-hidden transition-colors duration-300">
-          <h2 className="text-2xl font-extrabold mb-6 tracking-tight text-gray-900 dark:text-white">Site Settings</h2>
-          <form onSubmit={handleSocialSubmit} className="space-y-4 relative z-10">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-gray-200 mb-2 border-b border-gray-200 dark:border-white/10 pb-2">About Page Text</h3>
-            <textarea placeholder="Write a short description about this platform..." rows={4} className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm resize-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={socialForm.aboutText || ''} onChange={e => setSocialForm({...socialForm, aboutText: e.target.value})} />
-            
-            <h3 className="text-sm font-bold text-gray-900 dark:text-gray-200 mt-6 mb-2 border-b border-gray-200 dark:border-white/10 pb-2">Social Media Links</h3>
-            
-            {['facebook', 'twitter', 'instagram', 'linkedin', 'discord', 'youtube'].map((platform) => (
-              <div key={platform} className="flex flex-col gap-1">
-                 <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 capitalize">{platform} URL</label>
-                 <input placeholder={`https://${platform}.com/...`} className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={socialForm[platform as keyof SocialLinks] || ''} onChange={e => setSocialForm({...socialForm, [platform]: e.target.value})} />
+          <h2 className="text-2xl font-extrabold mb-2 tracking-tight text-gray-900 dark:text-white">Home Page Banners</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Manage up to 3 banners to display below the hero section.</p>
+          <form onSubmit={handleBannersSubmit} className="space-y-6 relative z-10">
+            {[0, 1, 2].map(index => (
+              <div key={index} className="p-5 border border-gray-200 dark:border-white/10 rounded-xl bg-gray-50 dark:bg-black/40">
+                <h3 className="text-sm font-bold text-gray-900 dark:text-gray-200 mb-4 flex items-center gap-2">
+                  <span className="bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 w-6 h-6 rounded-full flex items-center justify-center text-xs">{index + 1}</span> 
+                  Banner Slot {index + 1}
+                </h3>
+                <div className="space-y-3 relative z-10 p-1">
+                  <div className="z-20">
+                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 z-30 inline-block pointer-events-none">Title / Alt Text</label>
+                    <input placeholder="e.g., Summer Sale or Check out new Prompts" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-2.5 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 relative z-40" value={banners[index].title} onChange={e => { const newB = [...banners]; newB[index].title = e.target.value; setBanners(newB); }} />
+                  </div>
+                  <div className="z-20">
+                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 z-30 inline-block pointer-events-none">Image URL</label>
+                    <input placeholder="https://example.com/banner.jpg" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-2.5 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 relative z-40" value={banners[index].imageUrl} onChange={e => { const newB = [...banners]; newB[index].imageUrl = e.target.value; setBanners(newB); }} />
+                  </div>
+                  <div className="z-20">
+                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 z-30 inline-block pointer-events-none">Destination Link</label>
+                    <input placeholder="https://..." className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-2.5 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 relative z-40" value={banners[index].link} onChange={e => { const newB = [...banners]; newB[index].link = e.target.value; setBanners(newB); }} />
+                  </div>
+                </div>
               </div>
             ))}
-            
-            <button type="submit" disabled={socialLoading} className="bg-gray-900 dark:bg-white text-white dark:text-black py-4 px-6 rounded-xl font-black text-sm tracking-widest uppercase hover:bg-gray-800 dark:hover:bg-gray-200 transition-all w-full mt-6 shadow-sm">
-              {socialLoading ? "Saving..." : "Save Settings"}
+            <button type="submit" disabled={bannersLoading} className="bg-gray-900 dark:bg-white text-white dark:text-black py-4 px-6 rounded-xl font-black text-sm tracking-widest uppercase hover:bg-gray-800 dark:hover:bg-gray-200 transition-all w-full mt-6 shadow-sm relative z-50">
+              {bannersLoading ? "Saving..." : "Save Banners"}
             </button>
           </form>
+        </div>
+      ) : view === 'settings' ? (
+        <div className="space-y-6">
+          <div className="bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 p-8 rounded-2xl max-w-3xl shadow-sm relative overflow-hidden transition-colors duration-300">
+            <h2 className="text-2xl font-extrabold mb-6 tracking-tight text-gray-900 dark:text-white">General Site Settings</h2>
+            <form onSubmit={handleSiteSubmit} className="space-y-4 relative z-10">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">Site Logo URL</label>
+                <input placeholder="https://example.com/logo.png" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={siteForm.logoUrl || ''} onChange={e => setSiteForm({...siteForm, logoUrl: e.target.value})} />
+                <p className="text-xs text-gray-400">Leave empty to use the default vector logo.</p>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">Site Name</label>
+                <input placeholder="PROMPTLAB" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={siteForm.siteName || ''} onChange={e => setSiteForm({...siteForm, siteName: e.target.value})} />
+              </div>
+              <button type="submit" disabled={siteLoading} className="bg-blue-600 text-white py-3 px-6 rounded-xl font-bold text-sm hover:bg-blue-700 transition-all w-full mt-4 shadow-sm">
+                {siteLoading ? "Saving..." : "Save General Settings"}
+              </button>
+            </form>
+          </div>
+
+          <div className="bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 p-8 rounded-2xl max-w-3xl shadow-sm relative overflow-hidden transition-colors duration-300">
+            <h2 className="text-2xl font-extrabold mb-6 tracking-tight text-gray-900 dark:text-white">Social & About Settings</h2>
+            <form onSubmit={handleSocialSubmit} className="space-y-4 relative z-10">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-gray-200 mb-2 border-b border-gray-200 dark:border-white/10 pb-2">About Page Text</h3>
+              <textarea placeholder="Write a short description about this platform..." rows={4} className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm resize-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={socialForm.aboutText || ''} onChange={e => setSocialForm({...socialForm, aboutText: e.target.value})} />
+              
+              <h3 className="text-sm font-bold text-gray-900 dark:text-gray-200 mt-6 mb-2 border-b border-gray-200 dark:border-white/10 pb-2">Social Media Links</h3>
+              
+              {['facebook', 'twitter', 'instagram', 'linkedin', 'discord', 'youtube'].map((platform) => (
+                <div key={platform} className="flex flex-col gap-1">
+                   <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 capitalize">{platform} URL</label>
+                   <input placeholder={`https://${platform}.com/...`} className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={socialForm[platform as keyof SocialLinks] || ''} onChange={e => setSocialForm({...socialForm, [platform]: e.target.value})} />
+                </div>
+              ))}
+              
+              <button type="submit" disabled={socialLoading} className="bg-gray-900 dark:bg-white text-white dark:text-black py-4 px-6 rounded-xl font-black text-sm tracking-widest uppercase hover:bg-gray-800 dark:hover:bg-gray-200 transition-all w-full mt-6 shadow-sm">
+                {socialLoading ? "Saving..." : "Save Social Settings"}
+              </button>
+            </form>
+          </div>
         </div>
       ) : view === 'ads' ? (
         <div className="bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 p-8 rounded-2xl max-w-3xl shadow-sm relative overflow-hidden transition-colors duration-300">
@@ -528,7 +644,8 @@ export function AdminPage() {
                         </td>
                         <td className="py-5 px-4 text-right space-x-2">
                            <button onClick={() => startEdit(prompt)} className="p-2 text-gray-400 dark:text-gray-500 hover:text-white hover:bg-gray-900 dark:hover:bg-white dark:hover:text-black rounded-lg border border-transparent hover:border-gray-900 dark:hover:border-white transition-all shadow-sm" title="Edit Prompt"><Edit2 className="w-4 h-4" /></button>
-                           <button onClick={() => handleReject(prompt.id!)} className="p-2 text-gray-400 dark:text-gray-500 hover:text-white hover:bg-red-600 rounded-lg border border-transparent hover:border-red-600 transition-all shadow-sm" title="Reject Prompt"><X className="w-4 h-4" /></button>
+                           <button onClick={() => handleReject(prompt.id!)} className="p-2 text-gray-400 dark:text-gray-500 hover:text-white hover:bg-orange-600 rounded-lg border border-transparent hover:border-orange-600 transition-all shadow-sm" title="Hide/Turn Off Prompt"><EyeOff className="w-4 h-4" /></button>
+                           <button onClick={() => handleDelete(prompt.id!)} className="p-2 text-gray-400 dark:text-gray-500 hover:text-white hover:bg-red-600 rounded-lg border border-transparent hover:border-red-600 transition-all shadow-sm" title="Delete Prompt"><Trash2 className="w-4 h-4" /></button>
                         </td>
                       </tr>
                     ))}
