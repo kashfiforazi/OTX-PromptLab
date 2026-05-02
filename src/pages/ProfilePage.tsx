@@ -90,7 +90,7 @@ export function ProfilePage() {
         ) : savedPrompts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {savedPrompts.map(prompt => (
-              <PromptCard key={prompt.id} prompt={prompt} onClick={() => navigate(`/prompt/${prompt.id}`)} />
+              <PromptCard key={prompt.id} prompt={prompt} onClick={() => navigate(`/prompt/${prompt.slug || prompt.id}`)} />
             ))}
           </div>
         ) : (

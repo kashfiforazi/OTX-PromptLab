@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Copy, Plus, Play, Sparkles, Check, ExternalLink, Share2 } from 'lucide-react';
+import { Copy, Plus, Play, Sparkles, Check, ExternalLink, Share2, ShieldCheck, User } from 'lucide-react';
 import { Prompt } from '../types';
 import { incrementCopies, incrementViews } from '../services/api';
 import { cn } from '../lib/utils';
+import { copyToClipboard } from '../utils/copy';
 import { motion } from 'framer-motion';
 import { SaveButton } from './SaveButton';
 
@@ -16,8 +17,9 @@ export const PromptCard: React.FC<Props> = ({ prompt, onClick }) => {
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (copied) return;
     try {
-      await navigator.clipboard.writeText(prompt.promptText);
+      await copyToClipboard(prompt.promptText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       await incrementCopies(prompt.id!);
@@ -28,15 +30,23 @@ export const PromptCard: React.FC<Props> = ({ prompt, onClick }) => {
 
   const handleCardClick = () => {
     incrementViews(prompt.id!).catch(console.error);
-    if (onClick) onClick();
+    if (onClick) {
+      onClick();
+    } else {
+      // Default navigation if no onClick is provided
+      const target = prompt.slug || prompt.id;
+      window.location.href = `/prompt/${target}`;
+    }
   };
 
   const [shareCopied, setShareCopied] = useState(false);
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (shareCopied) return;
     try {
-      await navigator.clipboard.writeText(window.location.origin + '/prompt/' + prompt.id);
+      const target = prompt.slug || prompt.id;
+      await copyToClipboard(window.location.origin + '/prompt/' + target);
       setShareCopied(true);
       setTimeout(() => setShareCopied(false), 2000);
     } catch (err) {}
@@ -94,6 +104,15 @@ export const PromptCard: React.FC<Props> = ({ prompt, onClick }) => {
         )}
 
         <div className={cn("flex flex-1 flex-col p-6", !prompt.mediaUrl && "pt-6")}>
+          <div className="flex items-center gap-2 mb-3 mt-1">
+             <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center overflow-hidden">
+                {prompt.authorName === 'Oentrix Team' ? <ShieldCheck className="w-3 h-3 text-blue-600 dark:text-blue-400"/> : <User className="w-3 h-3 text-gray-500"/>}
+             </div>
+             <span className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1">
+               {prompt.authorName || 'Anonymous'}
+               {prompt.authorName === 'Oentrix Team' && <ShieldCheck className="w-3 h-3 text-blue-500" />}
+             </span>
+          </div>
           {!prompt.mediaUrl && (
             <div className="mb-4 flex gap-2">
                <span className="text-[10px] px-2 py-1 bg-gray-100 dark:bg-white/10 rounded uppercase font-bold text-gray-700 dark:text-white tracking-widest border border-gray-200 dark:border-white/5 font-sans">

@@ -1,19 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Prompt } from '../types';
-import { fetchPrompts } from '../services/api';
-import { Loader2, ArrowLeft, Copy, Check, Play, Share2 } from 'lucide-react';
+import { fetchPrompts, fetchPromptBySlug } from '../services/api';
+import { Loader2, ArrowLeft, Copy, Check, Play, Share2, ShieldCheck, User } from 'lucide-react';
 import { useAds } from '../contexts/AdsContext';
 import { AdSense } from '../components/AdSense';
+import { useAuth } from '../hooks/useAuth';
 import { db } from '../services/firebase';
 import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
+import { copyToClipboard } from '../utils/copy';
 
 import { SaveButton } from '../components/SaveButton';
 
 export function PromptDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { idOrSlug } = useParams<{ idOrSlug: string }>();
   const navigate = useNavigate();
   const { settings: adsSettings } = useAds();
+  const { isAdmin } = useAuth();
   
   const [prompt, setPrompt] = useState<Prompt | null>(null);
   const [loading, setLoading] = useState(true);
@@ -22,20 +25,38 @@ export function PromptDetailPage() {
 
   useEffect(() => {
     async function loadPrompt() {
-      if (!id) return;
+      if (!idOrSlug) return;
       try {
         setLoading(true);
-        // We fetch all approved and find by ID (or fetch directly)
-        const docRef = doc(db, 'prompts', id);
-        const docSnap = await getDoc(docRef);
         
-        if (docSnap.exists() && docSnap.data().status === 'approved') {
-          const data = { id: docSnap.id, ...docSnap.data() } as Prompt;
-          setPrompt(data);
+        let targetData: Prompt | null = null;
+        
+        // 1. Try to fetch as ID directly
+        try {
+          const docRef = doc(db, 'prompts', idOrSlug);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists() && docSnap.data().status === 'approved') {
+            targetData = { id: docSnap.id, ...docSnap.data() } as Prompt;
+          }
+        } catch (e) {
+          // ID check failed or not a valid ID
+        }
+        
+        // 2. If not found by ID, try by Slug
+        if (!targetData) {
+          targetData = await fetchPromptBySlug(idOrSlug);
+        }
+        
+        if (targetData && targetData.status === 'approved') {
+          setPrompt(targetData);
+          
+          // Update page title for SEO
+          document.title = `${targetData.title} - Oentrix PromptLab`;
           
           // Increment view count
           try {
-            await updateDoc(docRef, { viewCount: increment(1) });
+            const promptRef = doc(db, 'prompts', targetData.id!);
+            await updateDoc(promptRef, { viewCount: increment(1) });
           } catch (e) {
             console.error("Failed to update view count", e);
           }
@@ -50,12 +71,16 @@ export function PromptDetailPage() {
       }
     }
     loadPrompt();
-  }, [id]);
+    
+    return () => {
+      document.title = "Oentrix PromptLab - Discover & Share Premium AI Prompts";
+    };
+  }, [idOrSlug]);
 
-  const handleCopy = async () => {
+  const handleCopy = async (text: string) => {
     if (!prompt) return;
     try {
-      await navigator.clipboard.writeText(prompt.promptText);
+      await copyToClipboard(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       
@@ -70,7 +95,8 @@ export function PromptDetailPage() {
 
   const handleShare = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      const sharePath = prompt?.slug ? `/prompt/${prompt.slug}` : `/prompt/${prompt?.id}`;
+      await copyToClipboard(`${window.location.origin}${sharePath}`);
       setShareCopied(true);
       setTimeout(() => setShareCopied(false), 2000);
     } catch (err) {}
@@ -133,43 +159,80 @@ export function PromptDetailPage() {
             
             <h1 className="text-3xl md:text-5xl font-display font-bold text-gray-900 dark:text-white tracking-tight mb-6">{prompt.title}</h1>
             
-            <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed mb-10 font-sans">{prompt.description}</p>
+            <div className="flex items-center gap-3 mb-6 bg-gray-50 dark:bg-white/5 w-fit px-4 py-2 rounded-full border border-gray-200 dark:border-white/10">
+              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold overflow-hidden shadow-inner">
+                {prompt.authorName === 'Oentrix Team' ? <ShieldCheck className="w-4 h-4"/> : <User className="w-4 h-4"/>}
+              </div>
+              <span className="font-bold text-sm flex items-center gap-1.5 text-gray-800 dark:text-gray-200">
+                {prompt.authorName || 'Anonymous'}
+                {prompt.authorName === 'Oentrix Team' && <ShieldCheck className="w-4 h-4 text-blue-500" title="Verified Admin"/>}
+              </span>
+            </div>
+
+            <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed mb-8 font-sans">{prompt.description}</p>
             
+            {/* Ad Slot #1 - Middle */}
+            {adsSettings?.enabled && (adsSettings?.googleAdSlotSidebar || adsSettings?.googleAdClient) && (
+              <div className="w-full h-auto py-8 mb-8 border-y border-gray-100 dark:border-white/10">
+                <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotSidebar || ''} format="horizontal" showPlaceholder={isAdmin} />
+              </div>
+            )}
+
             <div className="flex items-center gap-6 mb-12 text-sm text-gray-500 dark:text-gray-400 font-mono pb-8 border-b border-gray-100 dark:border-white/10">
               <span className="flex items-center gap-2"><Play className="w-4 h-4"/> {prompt.viewCount} Views</span>
               <span className="flex items-center gap-2"><Copy className="w-4 h-4"/> {prompt.copyCount} Copies</span>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-widest">Prompt Text</h3>
-                <div className="flex gap-2">
-                  <button 
-                    onClick={handleShare}
-                    className={`flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl transition-colors uppercase tracking-wider ${shareCopied ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10' : 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20'}`}
-                  >
-                    {shareCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
-                    {shareCopied ? 'Copied' : 'Share'}
-                  </button>
-                  <button 
-                    onClick={handleCopy}
-                    className="flex items-center gap-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-xl transition-colors uppercase tracking-wider shadow-sm"
-                  >
-                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    {copied ? 'Copied!' : 'Copy Text'}
-                  </button>
+            <div className="mb-6 flex gap-2">
+              <button 
+                onClick={handleShare}
+                className={`flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl transition-colors uppercase tracking-wider ${shareCopied ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10' : 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20'}`}
+              >
+                {shareCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+                {shareCopied ? 'Link Copied' : 'Share Post'}
+              </button>
+            </div>
+
+            <div className="space-y-8">
+              {[ { promptText: prompt.promptText, mediaUrl: null }, ...(prompt.items || []) ].filter(i => i.promptText.trim()).map((item, idx) => (
+                <div key={idx} className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-md">
+                      {idx === 0 ? 'Main Prompt' : `Variation #${idx}`}
+                    </h3>
+                    <button 
+                      onClick={() => handleCopy(item.promptText)}
+                      className="flex items-center gap-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-xl transition-colors uppercase tracking-wider shadow-sm"
+                    >
+                      {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      {copied ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                  {item.mediaUrl && (
+                    <div className="w-full max-w-2xl bg-gray-100 dark:bg-[#050505] rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-sm" style={{ aspectRatio: '1.91 / 1' }}>
+                      {item.mediaUrl.match(/\.(mp4|webm)$/i) ? (
+                        <video src={item.mediaUrl} autoPlay muted loop className="w-full h-full object-cover" />
+                      ) : (
+                        <img src={item.mediaUrl} className="w-full h-full object-cover" />
+                      )}
+                    </div>
+                  )}
+                  <div className="bg-gray-50 dark:bg-[#111] p-6 md:p-8 rounded-2xl border border-gray-200/50 dark:border-white/10 group">
+                    <p className="font-mono text-sm md:text-base leading-relaxed text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words">{item.promptText}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="bg-gray-50 dark:bg-[#111] p-6 md:p-8 rounded-2xl border border-gray-200/50 dark:border-white/10 mt-4 group">
-                <p className="font-mono text-sm md:text-base leading-relaxed text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words">{prompt.promptText}</p>
-              </div>
+              ))}
             </div>
           </div>
         </div>
 
+        {/* Ad Slot #2 - Bottom */}
         {adsSettings?.enabled &&(adsSettings?.googleAdSlotFooter || adsSettings?.googleAdClient) && (
-          <div className="w-full flex justify-center mt-16 overflow-hidden">
-             <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotFooter || ''} />
+          <div className="w-full flex flex-col items-center mt-16 overflow-hidden">
+             <div className="text-center mb-4">
+                <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-400 dark:text-gray-500">Advertisement</span>
+             </div>
+             <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotFooter || ''} showPlaceholder={isAdmin} />
           </div>
         )}
       </div>

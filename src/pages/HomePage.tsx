@@ -1,23 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { Prompt } from '../types';
 import { fetchPrompts, getBanners, Banner } from '../services/api';
 import { PromptCard } from '../components/PromptCard';
-import { Sparkles, Search, Loader2, ExternalLink, Image as ImageIcon } from 'lucide-react';
+import { Sparkles, Search, Loader2, ExternalLink, Image as ImageIcon, ShieldCheck, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAds } from '../contexts/AdsContext';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { Autoplay, Pagination, Navigation, EffectFade } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
+import 'swiper/css/navigation';
+import 'swiper/css/effect-fade';
 import { AdSense } from '../components/AdSense';
 import { SaveButton } from '../components/SaveButton';
 
 export function HomePage() {
+  const navigate = useNavigate();
   const { settings: adsSettings } = useAds();
+  const { isAdmin } = useAuth();
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
-  const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -67,26 +74,53 @@ export function HomePage() {
             <span>Welcome to the future of AI</span>
           </motion.div>
 
-          {/* Dynamic Banners */}
+          {/* Dynamic Banners Slider */}
           {banners.length > 0 && !searchTerm && !selectedCategory && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 w-full">
-              {banners.map((banner, index) => (
-                <a 
-                  key={index} 
-                  href={banner.link || '#'} 
-                  target={banner.link?.startsWith('http') ? '_blank' : '_self'} 
-                  rel="noopener noreferrer"
-                  className="group relative h-40 md:h-48 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 block"
-                >
-                  <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-                  {banner.title && (
-                    <div className="absolute bottom-5 left-5 right-5">
-                      <h3 className="text-white font-display font-bold text-xl leading-tight drop-shadow-md text-left">{banner.title}</h3>
-                    </div>
-                  )}
-                </a>
-              ))}
+            <div className="w-full max-w-6xl mx-auto mb-10 overflow-hidden rounded-3xl shadow-lg relative group">
+              <Swiper
+                modules={[Autoplay, Pagination, Navigation, EffectFade]}
+                effect="fade"
+                spaceBetween={0}
+                slidesPerView={1}
+                autoplay={{ delay: 4000, disableOnInteraction: false }}
+                pagination={{ clickable: true, dynamicBullets: true }}
+                navigation={{
+                  nextEl: '.swiper-button-next-custom',
+                  prevEl: '.swiper-button-prev-custom',
+                }}
+                loop={true}
+                className="w-full h-56 md:h-80 lg:h-[400px] rounded-3xl"
+              >
+                {banners.map((banner, index) => (
+                  <SwiperSlide key={index} className="w-full h-full">
+                    <a 
+                      href={banner.link || '#'} 
+                      target={banner.link?.startsWith('http') ? '_blank' : '_self'} 
+                      rel="noopener noreferrer"
+                      className="relative block w-full h-full"
+                    >
+                      <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                      {banner.title && (
+                        <div className="absolute bottom-6 md:bottom-10 left-6 md:left-10 right-10">
+                          <h3 className="text-white font-display font-bold text-2xl md:text-5xl leading-tight drop-shadow-lg max-w-3xl">{banner.title}</h3>
+                        </div>
+                      )}
+                    </a>
+                  </SwiperSlide>
+                ))}
+
+                <button className="swiper-button-prev-custom absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all duration-300">
+                   <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <button className="swiper-button-next-custom absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all duration-300">
+                   <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                </button>
+              </Swiper>
+              <style dangerouslySetInnerHTML={{__html:`
+                .swiper-pagination-bullet { background: white; opacity: 0.5; }
+                .swiper-pagination-bullet-active { background: white; opacity: 1; }
+              `}} />
             </div>
           )}
           
@@ -136,7 +170,7 @@ export function HomePage() {
       <div className="container max-w-7xl mx-auto px-4">
         {/* Categories */}
         {categories.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-10 justify-center">
+          <div className="flex flex-wrap gap-2 mb-6 justify-center">
             <button
               onClick={() => setSelectedCategory(null)}
               className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors duration-300 ${!selectedCategory ? 'bg-gray-900 dark:bg-blue-600 text-white dark:text-white dark:shadow-[0_0_15px_rgba(37,99,235,0.4)]' : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'}`}
@@ -170,10 +204,27 @@ export function HomePage() {
             </section>
           </div>
         ) : (!searchTerm && !selectedCategory) ? (
-          <div className="space-y-16">
-            {adsSettings?.enabled &&(adsSettings?.googleAdSlotHead || adsSettings?.googleAdClient) && (
-              <div className="w-full flex justify-center mb-8 overflow-hidden">
+          <div className="space-y-10">
+            {adsSettings?.enabled && (adsSettings?.googleAdSlotHead || adsSettings?.googleAdClient) && (
+              <div className="w-full flex justify-center overflow-hidden mb-6">
                  <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotHead || ''} />
+              </div>
+            )}
+
+            <section>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white tracking-tight transition-colors duration-300">Newest Uploads</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {prompts.slice(0, 12).map(prompt => (
+                  <PromptCard key={prompt.id} prompt={prompt} onClick={() => navigate(`/prompt/${prompt.slug || prompt.id}`)} />
+                ))}
+              </div>
+            </section>
+            
+            {adsSettings?.enabled && (adsSettings?.googleAdSlotSidebar || adsSettings?.googleAdClient) && (
+              <div className="w-full flex justify-center overflow-hidden my-6">
+                 <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotSidebar || ''} format="horizontal" />
               </div>
             )}
             
@@ -185,10 +236,16 @@ export function HomePage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {featured.map(prompt => (
-                     <PromptCard key={prompt.id} prompt={prompt} onClick={() => setSelectedPrompt(prompt)} />
+                     <PromptCard key={prompt.id} prompt={prompt} onClick={() => navigate(`/prompt/${prompt.slug || prompt.id}`)} />
                   ))}
                 </div>
               </section>
+            )}
+
+            {adsSettings?.enabled && (adsSettings?.googleAdSlotSidebar || adsSettings?.googleAdClient) && trending.length > 0 && (
+              <div className="w-full flex justify-center overflow-hidden my-6">
+                 <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotSidebar || ''} format="horizontal" />
+              </div>
             )}
             
             {trending.length > 0 && (
@@ -199,20 +256,27 @@ export function HomePage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {trending.map(prompt => (
-                     <PromptCard key={prompt.id} prompt={prompt} onClick={() => setSelectedPrompt(prompt)} />
+                     <PromptCard key={prompt.id} prompt={prompt} onClick={() => navigate(`/prompt/${prompt.slug || prompt.id}`)} />
                   ))}
                 </div>
               </section>
             )}
 
-            <section>
-              <h2 className="text-2xl font-display font-bold mb-6 text-gray-900 dark:text-white tracking-tight transition-colors duration-300">Newest Uploads</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {prompts.slice(0, 12).map(prompt => (
-                  <PromptCard key={prompt.id} prompt={prompt} onClick={() => setSelectedPrompt(prompt)} />
-                ))}
+            {adsSettings?.enabled && (adsSettings?.googleAdSlotFooter || adsSettings?.googleAdClient) && (
+              <div className="w-full h-auto py-8">
+                <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotFooter || ''} format="auto" showPlaceholder={isAdmin} />
               </div>
-            </section>
+            )}
+
+            {/* Extra Footer Ad Slot */}
+            {adsSettings?.enabled && (adsSettings?.googleAdSlotFooter || adsSettings?.googleAdClient) && (
+              <div className="w-full h-auto py-12 border-t border-gray-100 dark:border-white/10 mt-12">
+                <div className="text-center mb-4">
+                  <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-400 dark:text-gray-500">Advertisement</span>
+                </div>
+                <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotFooter || ''} format="auto" showPlaceholder={isAdmin} />
+              </div>
+            )}
           </div>
         ) : (
           <div>
@@ -227,7 +291,7 @@ export function HomePage() {
                     exit={{ opacity: 0, scale: 0.9 }}
                     layout
                   >
-                    <PromptCard prompt={prompt} onClick={() => setSelectedPrompt(prompt)} />
+                    <PromptCard prompt={prompt} onClick={() => navigate(`/prompt/${prompt.slug || prompt.id}`)} />
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -247,82 +311,6 @@ export function HomePage() {
           </div>
         )}
       </div>
-
-      {/* Modal for viewing prompt details */}
-      {createPortal(
-        <AnimatePresence>
-          {selectedPrompt && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 dark:bg-black/90 backdrop-blur-md"
-                 onClick={() => setSelectedPrompt(null)}>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                onClick={e => e.stopPropagation()}
-                className="bg-white dark:bg-[#0a0a0a] shadow-2xl w-full max-w-3xl rounded-3xl overflow-hidden max-h-[90vh] flex flex-col border border-gray-100 dark:border-white/10 transition-colors duration-300 relative"
-              >
-                 {selectedPrompt.mediaUrl && (
-                   <div className="relative w-full bg-gray-100 dark:bg-black shrink-0" style={{ aspectRatio: '1.91 / 1' }}>
-                     {selectedPrompt.mediaUrl.match(/\.(mp4|webm)$/i) ? (
-                       <video src={selectedPrompt.mediaUrl} autoPlay muted loop className="w-full h-full object-cover" />
-                     ) : (
-                       <img src={selectedPrompt.mediaUrl} className="w-full h-full object-cover" />
-                     )}
-                     <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-[#0a0a0a] via-white/20 dark:via-[#0a0a0a]/20 to-transparent opacity-100" />
-                   </div>
-                 )}
-                 <div className="p-8 md:p-10 flex-1 overflow-y-auto z-10 -mt-10 md:-mt-16">
-                   <div className="flex justify-between items-start mb-4 gap-4 relative">
-                     <h2 className="text-3xl md:text-4xl font-display font-extrabold text-gray-900 dark:text-white tracking-tight break-words">{selectedPrompt.title}</h2>
-                     <div className="flex gap-2">
-                       <SaveButton promptId={selectedPrompt.id!} className="shrink-0 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 p-2.5 rounded-full" />
-                       <button 
-                         onClick={() => window.open(`/prompt/${selectedPrompt.id}`, '_blank')}
-                         className="shrink-0 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 p-2.5 rounded-full transition-colors"
-                         title="Open Full Page"
-                       >
-                         <ExternalLink className="h-5 w-5" />
-                       </button>
-                       <button onClick={() => setSelectedPrompt(null)} className="shrink-0 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 p-2.5 rounded-full transition-colors">
-                         ✕
-                       </button>
-                     </div>
-                   </div>
-                   <div className="flex flex-wrap gap-2 mb-8">
-                     <span className="bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-500/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">{selectedPrompt.category}</span>
-                     {selectedPrompt.tags.map(tag => (
-                       <span key={tag} className="bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 border border-gray-200/50 dark:border-white/10 px-3 py-1 rounded-full text-xs font-medium">#{tag}</span>
-                     ))}
-                   </div>
-                   <p className="text-gray-600 dark:text-gray-300 mb-10 text-base md:text-lg leading-relaxed font-sans">{selectedPrompt.description}</p>
-                   
-                   <div className="mb-2">
-                     <div className="flex items-center justify-between mb-4">
-                       <h3 className="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400 font-bold">Prompt String</h3>
-                       <button 
-                         onClick={async () => {
-                           try {
-                             await navigator.clipboard.writeText(selectedPrompt.promptText);
-                             // Need to show copied feedback, but we can just use a simple alert since there's no state right here
-                             alert('Copied to clipboard!');
-                           } catch (err) {}
-                         }}
-                         className="flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 px-3 py-1.5 rounded-lg transition-colors uppercase tracking-wider"
-                       >
-                         Copy Text
-                       </button>
-                     </div>
-                     <div className="bg-gray-50 dark:bg-[#111] p-6 lg:p-8 rounded-2xl border border-gray-200/50 dark:border-white/10 relative group transition-colors duration-300">
-                       <p className="font-mono text-sm md:text-base leading-relaxed text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words">{selectedPrompt.promptText}</p>
-                     </div>
-                   </div>
-                 </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
     </div>
   );
 }

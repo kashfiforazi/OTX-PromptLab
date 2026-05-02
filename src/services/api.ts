@@ -4,7 +4,15 @@ import type { Prompt, PromptStatus } from '../types';
 
 const PROMPTS_COLLECTION = 'prompts';
 
-export async function fetchPrompts(status: PromptStatus = 'approved', maxLimit = 50) {
+let cachedApprovedPrompts: Prompt[] | null = null;
+let lastCacheTime = 0;
+const CACHE_TTL_MS = 1000 * 60 * 5; // 5 minutes
+
+export async function fetchPrompts(status: PromptStatus = 'approved', maxLimit = 50, forceRefresh = false) {
+  if (!forceRefresh && status === 'approved' && maxLimit === 50 && cachedApprovedPrompts && (Date.now() - lastCacheTime < CACHE_TTL_MS)) {
+    return cachedApprovedPrompts;
+  }
+  
   try {
     const q = query(
       collection(db, PROMPTS_COLLECTION),
@@ -13,7 +21,7 @@ export async function fetchPrompts(status: PromptStatus = 'approved', maxLimit =
       limit(maxLimit)
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => {
+    const prompts = snapshot.docs.map(doc => {
       const data = doc.data();
       return { 
         id: doc.id, 
@@ -22,6 +30,13 @@ export async function fetchPrompts(status: PromptStatus = 'approved', maxLimit =
         updatedAt: data.updatedAt?.toMillis ? data.updatedAt.toMillis() : Date.now()
       } as Prompt;
     });
+    
+    if (status === 'approved' && maxLimit === 50) {
+      cachedApprovedPrompts = prompts;
+      lastCacheTime = Date.now();
+    }
+    
+    return prompts;
   } catch (error) {
     return handleFirestoreError(error, 'list', PROMPTS_COLLECTION);
   }
@@ -40,6 +55,30 @@ export async function submitPrompt(prompt: Omit<Prompt, 'id' | 'viewCount' | 'co
     return docRef.id;
   } catch (error) {
     return handleFirestoreError(error, 'create', PROMPTS_COLLECTION);
+  }
+}
+
+export async function fetchPromptBySlug(slug: string) {
+  try {
+    const q = query(
+      collection(db, PROMPTS_COLLECTION),
+      where('slug', '==', slug),
+      limit(1)
+    );
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+      const doc = snapshot.docs[0];
+      const data = doc.data();
+      return { 
+        id: doc.id, 
+        ...data,
+        createdAt: data.createdAt?.toMillis ? data.createdAt.toMillis() : Date.now(),
+        updatedAt: data.updatedAt?.toMillis ? data.updatedAt.toMillis() : Date.now()
+      } as Prompt;
+    }
+    return null;
+  } catch (error) {
+    return handleFirestoreError(error, 'get', `${PROMPTS_COLLECTION}/slug/${slug}`);
   }
 }
 
@@ -193,11 +232,21 @@ export interface Banner {
   title: string;
 }
 
-export async function getBanners(): Promise<Banner[]> {
+let cachedBanners: Banner[] | null = null;
+let lastBannerCacheTime = 0;
+
+export async function getBanners(forceRefresh = false): Promise<Banner[]> {
+  if (!forceRefresh && cachedBanners && (Date.now() - lastBannerCacheTime < CACHE_TTL_MS)) {
+    return cachedBanners;
+  }
+  
   try {
     const docSnap = await getDoc(doc(db, 'settings', 'banners'));
     if (docSnap.exists()) {
-      return (docSnap.data().items || []) as Banner[];
+      const items = (docSnap.data().items || []) as Banner[];
+      cachedBanners = items;
+      lastBannerCacheTime = Date.now();
+      return items;
     }
   } catch (error) {
     console.error("Error fetching banners", error);

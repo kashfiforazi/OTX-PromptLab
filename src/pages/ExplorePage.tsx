@@ -98,6 +98,12 @@ export function ExplorePage() {
               </h2>
             </div>
 
+            {adsSettings?.enabled && (adsSettings?.googleAdSlotSidebar || adsSettings?.googleAdClient) && (
+              <div className="w-full h-auto py-8 mb-8 border-b border-gray-100 dark:border-white/10">
+                 <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotSidebar || ''} format="horizontal" />
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               <AnimatePresence>
                 {filteredPrompts.map((prompt) => (
@@ -108,7 +114,7 @@ export function ExplorePage() {
                     exit={{ opacity: 0, scale: 0.9 }}
                     layout
                   >
-                    <PromptCard prompt={prompt} onClick={() => navigate(`/prompt/${prompt.id}`)} />
+                    <PromptCard prompt={prompt} onClick={() => navigate(`/prompt/${prompt.slug || prompt.id}`)} />
                   </motion.div>
                 ))}
               </AnimatePresence>

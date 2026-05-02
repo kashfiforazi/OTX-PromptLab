@@ -3,9 +3,10 @@ import { useAuth } from '../hooks/useAuth';
 import { signInWithGoogle, logout } from '../services/firebase';
 import { fetchPrompts, updatePromptStatus, deletePrompt, submitPrompt, updatePrompt, getSocialLinks, updateSocialLinks, SocialLinks, AdsSettings, getAdsSettings, updateAdsSettings, getBanners, updateBanners, Banner, SiteSettings, getSiteSettings, updateSiteSettings } from '../services/api';
 import { Prompt } from '../types';
-import { Shield, Loader2, Check, X, LayoutDashboard, LogOut, Star, TrendingUp, Plus, Edit2, Play, Copy, Settings, Lock, FileText, Megaphone, Image as ImageIcon, Trash2, EyeOff } from 'lucide-react';
+import { Shield, Loader2, Check, X, LayoutDashboard, LogOut, Star, TrendingUp, Plus, Edit2, Play, Copy, Settings, Lock, FileText, Megaphone, Image as ImageIcon, Trash2, EyeOff, User, ShieldCheck } from 'lucide-react';
 import { db } from '../services/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { slugify } from '../utils/slugify';
 
 export function AdminPage() {
   const { user, loading: authLoading, isAdmin } = useAuth();
@@ -13,9 +14,21 @@ export function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'dashboard' | 'submissions' | 'add' | 'edit' | 'settings' | 'ads' | 'banners'>('dashboard');
 
-  const [addForm, setAddForm] = useState({ title: '', description: '', promptText: '', mediaUrl: '', category: 'Image', tags: '' });
+  const [addForm, setAddForm] = useState({ title: '', slug: '', description: '', promptText: '', mediaUrl: '', items: [] as {promptText: string, mediaUrl: string}[], category: 'Image', tags: '' });
   const [addLoading, setAddLoading] = useState(false);
   const [editPromptId, setEditPromptId] = useState<string | null>(null);
+
+  // Auto-generate slug from title in Admin Add/Edit
+  useEffect(() => {
+    if (addForm.title && (view === 'add' || view === 'edit')) {
+      setAddForm(prev => ({
+        ...prev,
+        slug: prev.slug === slugify(prev.title.slice(0, -1)) || !prev.slug
+          ? slugify(prev.title) 
+          : prev.slug
+      }));
+    }
+  }, [addForm.title, view]);
 
   const [socialForm, setSocialForm] = useState<SocialLinks>({ facebook: '', twitter: '', instagram: '', linkedin: '', discord: '', youtube: '', aboutText: '' });
   const [socialLoading, setSocialLoading] = useState(false);
@@ -176,13 +189,17 @@ export function AdminPage() {
     try {
       await submitPrompt({
         ...addForm,
+        slug: addForm.slug || slugify(addForm.title),
         tags: addForm.tags.split(',').map(t => t.trim()).filter(Boolean),
         mediaUrl: addForm.mediaUrl || undefined,
+        items: addForm.items.filter(i => i.promptText.trim() !== ''),
         status: 'approved',
         isFeatured: false,
-        isTrending: false
+        isTrending: false,
+        authorId: user?.uid || 'admin',
+        authorName: 'Oentrix Team'
       });
-      setAddForm({ title: '', description: '', promptText: '', mediaUrl: '', category: 'Image', tags: '' });
+      setAddForm({ title: '', slug: '', description: '', promptText: '', mediaUrl: '', items: [], category: 'Image', tags: '' });
       setView('dashboard');
       loadData();
     } catch (err) {
@@ -199,10 +216,12 @@ export function AdminPage() {
     try {
       await updatePrompt(editPromptId, {
         ...addForm,
+        slug: addForm.slug || slugify(addForm.title),
         tags: addForm.tags.split(',').map(t => t.trim()).filter(Boolean),
-        mediaUrl: addForm.mediaUrl || undefined
+        mediaUrl: addForm.mediaUrl || undefined,
+        items: addForm.items.filter(i => i.promptText.trim() !== ''),
       });
-      setAddForm({ title: '', description: '', promptText: '', mediaUrl: '', category: 'Image', tags: '' });
+      setAddForm({ title: '', slug: '', description: '', promptText: '', mediaUrl: '', items: [], category: 'Image', tags: '' });
       setEditPromptId(null);
       setView('dashboard');
       loadData();
@@ -217,9 +236,11 @@ export function AdminPage() {
     setEditPromptId(p.id!);
     setAddForm({
       title: p.title,
+      slug: p.slug || '',
       description: p.description,
       promptText: p.promptText,
       mediaUrl: p.mediaUrl || '',
+      items: p.items || [],
       category: p.category,
       tags: p.tags.join(', ')
     });
@@ -389,7 +410,7 @@ export function AdminPage() {
         ].map(tab => (
           <button 
             key={tab.id}
-            onClick={() => {setView(tab.id as any); setEditPromptId(null); if(tab.id === 'add') setAddForm({ title: '', description: '', promptText: '', mediaUrl: '', category: 'Image', tags: '' });}} 
+            onClick={() => {setView(tab.id as any); setEditPromptId(null); if(tab.id === 'add') setAddForm({ title: '', description: '', promptText: '', mediaUrl: '', items: [], category: 'Image', tags: '' });}} 
             className={`px-5 py-3 font-semibold text-sm rounded-full whitespace-nowrap flex items-center gap-2 transition-all ${view === tab.id ? 'bg-gray-900 dark:bg-white text-white dark:text-black shadow-sm' : 'bg-white dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-200 dark:border-transparent'}`}
           >
             <tab.icon className="w-4 h-4"/> {tab.label}
@@ -529,14 +550,41 @@ export function AdminPage() {
         <div className="bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 p-8 rounded-2xl max-w-3xl shadow-sm relative overflow-hidden transition-colors duration-300">
           <h2 className="text-2xl font-extrabold mb-6 tracking-tight text-gray-900 dark:text-white">{view === 'edit' ? 'Edit Prompt' : 'Create New Prompt'}</h2>
           <form onSubmit={view === 'edit' ? handleEditSubmit : handleAddSubmit} className="space-y-4 relative z-10">
-            <input required placeholder="Title" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={addForm.title} onChange={e => setAddForm({...addForm, title: e.target.value})} />
-            <textarea required placeholder="Description" rows={3} className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm resize-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={addForm.description} onChange={e => setAddForm({...addForm, description: e.target.value})} />
-            <textarea required placeholder="Prompt text" rows={6} className="w-full bg-gray-50 dark:bg-black/50 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl font-mono text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-800 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-600" value={addForm.promptText} onChange={e => setAddForm({...addForm, promptText: e.target.value})} />
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">Title</label>
+              <input required placeholder="Title" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={addForm.title} onChange={e => setAddForm({...addForm, title: e.target.value})} />
+            </div>
+            
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">SEO Slug</label>
+              <input required placeholder="e-g-cyberpunk-city" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 font-mono" value={addForm.slug} onChange={e => setAddForm({...addForm, slug: slugify(e.target.value)})} />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">Description</label>
+              <textarea required placeholder="Description" rows={3} className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm resize-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={addForm.description} onChange={e => setAddForm({...addForm, description: e.target.value})} />
+            </div>
+            
+            <div className="p-4 bg-gray-50 dark:bg-black/40 rounded-xl border border-gray-200 dark:border-white/10 space-y-4">
+              <div className="flex justify-between items-center"><h3 className="font-bold text-sm">Main Prompt</h3></div>
+              <textarea required={addForm.items.length === 0} placeholder="Prompt text" rows={6} className="w-full bg-white dark:bg-black/50 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl font-mono text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-800 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-600" value={addForm.promptText} onChange={e => setAddForm({...addForm, promptText: e.target.value})} />
+              <input placeholder="Main Image or Video URL (Optional)" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={addForm.mediaUrl} onChange={e => setAddForm({...addForm, mediaUrl: e.target.value})} />
+            </div>
+
+            {addForm.items.map((item, i) => (
+               <div key={i} className="p-4 bg-gray-50 dark:bg-black/40 rounded-xl border border-gray-200 dark:border-white/10 space-y-4 relative">
+                 <button type="button" onClick={() => { const ns = [...addForm.items]; ns.splice(i, 1); setAddForm({...addForm, items: ns}); }} className="absolute top-4 right-4 text-red-500"><Trash2 className="w-4 h-4"/></button>
+                 <div className="flex justify-between items-center"><h3 className="font-bold text-sm">Sub Prompt #{i+1}</h3></div>
+                 <textarea required placeholder="Prompt text" rows={4} className="w-full bg-white dark:bg-black/50 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl font-mono text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-800 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-600" value={item.promptText} onChange={e => { const ns = [...addForm.items]; ns[i].promptText = e.target.value; setAddForm({...addForm, items: ns}); }} />
+                 <input placeholder="Image or Video URL (Optional)" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={item.mediaUrl} onChange={e => { const ns = [...addForm.items]; ns[i].mediaUrl = e.target.value; setAddForm({...addForm, items: ns}); }} />
+               </div>
+            ))}
+            <button type="button" onClick={() => setAddForm({...addForm, items: [...addForm.items, {promptText: '', mediaUrl: ''}]})} className="text-blue-500 text-sm font-bold flex items-center"><Plus className="w-4 h-4 mr-1"/> Add Sub-Prompt</button>
+
             <div className="flex flex-col md:flex-row gap-4">
-              <select className="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl min-w-[150px] focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white appearance-none cursor-pointer" value={addForm.category} onChange={e => setAddForm({...addForm, category: e.target.value})}>
+              <select className="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl min-w-[150px] focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white appearance-none cursor-pointer w-full" value={addForm.category} onChange={e => setAddForm({...addForm, category: e.target.value})}>
                 {['Image','Video','Logo','Gaming','Banner','Thumbnail'].map(c => <option key={c} value={c}>{c}</option>)}
               </select>
-              <input placeholder="Image or Video URL (Optional)" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={addForm.mediaUrl} onChange={e => setAddForm({...addForm, mediaUrl: e.target.value})} />
             </div>
             <input placeholder="Tags (comma separated)" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={addForm.tags} onChange={e => setAddForm({...addForm, tags: e.target.value})} />
             <button type="submit" disabled={addLoading} className="bg-blue-600 dark:bg-blue-500 text-white py-4 px-6 rounded-xl font-black text-sm tracking-widest uppercase hover:bg-blue-700 dark:hover:bg-blue-600 transition-all w-full mt-4 shadow-sm">

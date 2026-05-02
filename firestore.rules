@@ -26,8 +26,9 @@ service cloud.firestore {
     }
 
     function isValidPrompt(data) {
-      return data.keys().hasAll(['title', 'description', 'promptText', 'category', 'status', 'viewCount', 'copyCount', 'createdAt', 'updatedAt']) 
+      return data.keys().hasAll(['title', 'description', 'promptText', 'category', 'status', 'viewCount', 'copyCount', 'createdAt', 'updatedAt', 'slug']) 
         && data.title is string && data.title.size() <= 200
+        && data.slug is string && data.slug.size() <= 200
         && data.description is string && data.description.size() <= 1000
         && data.promptText is string && data.promptText.size() <= 5000
         && data.category is string && data.category.size() <= 100

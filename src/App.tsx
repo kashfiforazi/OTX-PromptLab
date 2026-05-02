@@ -5,6 +5,7 @@
 
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { ScrollToTop } from './components/ScrollToTop';
 import { Navbar } from './components/Navbar';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AdsProvider } from './contexts/AdsContext';
@@ -37,6 +38,7 @@ export default function App() {
         <AdsProvider>
           <AuthProvider>
             <Router>
+              <ScrollToTop />
             <div className="min-h-screen flex flex-col font-sans relative overflow-hidden transition-colors duration-300">
               <Navbar />
               <main className="flex-1 relative z-10 flex flex-col">
@@ -44,7 +46,7 @@ export default function App() {
                   <Routes>
                     <Route path="/" element={<HomePage />} />
                     <Route path="/explore" element={<ExplorePage />} />
-                    <Route path="/prompt/:id" element={<PromptDetailPage />} />
+                    <Route path="/prompt/:idOrSlug" element={<PromptDetailPage />} />
                     <Route path="/submit" element={<SubmitPage />} />
                     <Route path="/admin-secret-page" element={<AdminPage />} />
                     <Route path="/privacy" element={<PrivacyPage />} />
