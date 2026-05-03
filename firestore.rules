@@ -62,11 +62,10 @@ service cloud.firestore {
       allow update: if isValidId(promptId) && (
         isAdmin() ||
         (
-          isValidPrompt(incoming()) &&
           existing().status == 'approved' &&
           incoming().diff(existing()).affectedKeys().hasOnly(['viewCount', 'copyCount', 'updatedAt']) &&
-          incoming().viewCount >= existing().viewCount &&
-          incoming().copyCount >= existing().copyCount
+          (incoming().viewCount >= existing().viewCount) &&
+          (incoming().copyCount >= existing().copyCount)
         )
       );
 

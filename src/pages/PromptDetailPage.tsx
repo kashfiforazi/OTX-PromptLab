@@ -57,7 +57,10 @@ export function PromptDetailPage() {
           // Increment view count
           try {
             const promptRef = doc(db, 'prompts', targetData.id!);
-            await updateDoc(promptRef, { viewCount: increment(1) });
+            updateDoc(promptRef, { 
+              viewCount: increment(1),
+              updatedAt: serverTimestamp()
+            }).catch(e => console.error("Non-blocking view count update failed", e));
           } catch (e) {
             console.error("Failed to update view count", e);
           }
@@ -218,7 +221,7 @@ export function PromptDetailPage() {
                     </button>
                   </div>
                   {item.mediaUrl && (
-                    <div className="w-full max-w-2xl bg-gray-100 dark:bg-[#050505] rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-sm" style={{ aspectRatio: '1.91 / 1' }}>
+                    <div className="w-full max-w-sm bg-gray-100 dark:bg-[#050505] rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-sm aspect-[3/4]">
                       {item.mediaUrl.match(/\.(mp4|webm)$/i) ? (
                         <video src={item.mediaUrl} autoPlay muted loop className="w-full h-full object-cover" />
                       ) : (

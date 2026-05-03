@@ -13,10 +13,13 @@ export function Adsterra({ scriptHtml, showPlaceholder = false, label = "Adverti
   const { isAdmin } = useAuth();
 
   useEffect(() => {
-    if (!scriptHtml || isLoaded.current || !containerRef.current) return;
+    if (!scriptHtml || !containerRef.current) return;
+
+    // Clear previous contents
+    containerRef.current.innerHTML = '';
+    isLoaded.current = false;
 
     try {
-      // Create a temporary element to parse the HTML
       const div = document.createElement('div');
       div.innerHTML = scriptHtml;
       
@@ -27,11 +30,18 @@ export function Adsterra({ scriptHtml, showPlaceholder = false, label = "Adverti
         Array.from(oldScript.attributes).forEach(attr => {
           newScript.setAttribute(attr.name, attr.value);
         });
-        newScript.textContent = oldScript.textContent;
+        
+        if (oldScript.src) {
+          newScript.src = oldScript.src;
+          newScript.async = true;
+        } else {
+          newScript.textContent = oldScript.textContent;
+        }
+        
         containerRef.current?.appendChild(newScript);
       });
 
-      // Append non-script elements too
+      // Append non-script elements
       Array.from(div.childNodes).forEach(node => {
         if (node.nodeName !== 'SCRIPT') {
           containerRef.current?.appendChild(node.cloneNode(true));
