@@ -65,8 +65,11 @@ export function SubmitPage() {
         slug: formData.slug || slugify(formData.title),
         description: formData.description,
         promptText: formData.promptText,
-        mediaUrl: formData.mediaUrl || undefined,
-        items: formData.items.filter(i => i.promptText.trim() !== ''),
+        mediaUrl: formData.mediaUrl || '',
+        items: formData.items.filter(i => i.promptText.trim() !== '').map(item => ({
+          promptText: item.promptText,
+          mediaUrl: item.mediaUrl || ''
+        })),
         category: formData.category,
         aiModel: formData.aiModel,
         tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
@@ -262,15 +265,13 @@ export function SubmitPage() {
 
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-gray-400 font-bold transition-colors duration-300">AI Model</label>
-                  <select
-                    className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-sm cursor-pointer"
+                  <input
+                    type="text"
+                    placeholder="e.g. ChatGPT, Midjourney, etc."
+                    className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm"
                     value={formData.aiModel}
                     onChange={e => setFormData({ ...formData, aiModel: e.target.value })}
-                  >
-                    {['ChatGPT', 'Midjourney', 'DALL-E', 'Claude', 'Stable Diffusion', 'Gemini', 'Llama', 'Flux', 'Veed', 'Canva', 'Sora', 'Leonardo AI', 'PixVerse', 'Runway', 'Pika'].map(m => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
-                  </select>
+                  />
                 </div>
               </div>
 

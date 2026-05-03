@@ -42,15 +42,25 @@ export async function fetchPrompts(status: PromptStatus = 'approved', maxLimit =
   }
 }
 
+function cleanObject(obj: any) {
+  const newObj = { ...obj };
+  Object.keys(newObj).forEach(key => {
+    if (newObj[key] === undefined) {
+      delete newObj[key];
+    }
+  });
+  return newObj;
+}
+
 export async function submitPrompt(prompt: Omit<Prompt, 'id' | 'viewCount' | 'copyCount' | 'createdAt' | 'updatedAt'>) {
   try {
-    const newPrompt = {
+    const newPrompt = cleanObject({
       ...prompt,
       viewCount: 0,
       copyCount: 0,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-    };
+    });
     const docRef = await addDoc(collection(db, PROMPTS_COLLECTION), newPrompt);
     return docRef.id;
   } catch (error) {
@@ -123,7 +133,7 @@ export async function updatePrompt(promptId: string, data: Partial<Prompt>) {
   try {
     const promptRef = doc(db, PROMPTS_COLLECTION, promptId);
     await updateDoc(promptRef, {
-      ...data,
+      ...cleanObject(data),
       updatedAt: serverTimestamp()
     });
   } catch (error) {

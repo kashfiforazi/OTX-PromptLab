@@ -215,8 +215,11 @@ export function AdminPage() {
         ...addForm,
         slug: addForm.slug || slugify(addForm.title),
         tags: addForm.tags.split(',').map(t => t.trim()).filter(Boolean),
-        mediaUrl: addForm.mediaUrl || undefined,
-        items: addForm.items.filter(i => i.promptText.trim() !== ''),
+        mediaUrl: addForm.mediaUrl || '',
+        items: addForm.items.filter(i => i.promptText.trim() !== '').map(item => ({
+          promptText: item.promptText,
+          mediaUrl: item.mediaUrl || ''
+        })),
         category: addForm.category,
         aiModel: addForm.aiModel,
         status: 'approved',
@@ -244,8 +247,11 @@ export function AdminPage() {
         ...addForm,
         slug: addForm.slug || slugify(addForm.title),
         tags: addForm.tags.split(',').map(t => t.trim()).filter(Boolean),
-        mediaUrl: addForm.mediaUrl || undefined,
-        items: addForm.items.filter(i => i.promptText.trim() !== ''),
+        mediaUrl: addForm.mediaUrl || '',
+        items: addForm.items.filter(i => i.promptText.trim() !== '').map(item => ({
+          promptText: item.promptText,
+          mediaUrl: item.mediaUrl || ''
+        })),
         aiModel: addForm.aiModel,
       });
       setAddForm({ title: '', slug: '', description: '', promptText: '', mediaUrl: '', items: [], category: 'Image', tags: '' });
@@ -640,11 +646,13 @@ export function AdminPage() {
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-gray-500">AI Model</label>
-                <select className="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white appearance-none cursor-pointer w-full" value={addForm.aiModel} onChange={e => setAddForm({...addForm, aiModel: e.target.value})}>
-                  {['ChatGPT', 'Midjourney', 'DALL-E', 'Claude', 'Stable Diffusion', 'Gemini', 'Llama', 'Flux', 'Veed', 'Canva', 'Sora', 'Leonardo AI', 'PixVerse', 'Runway', 'Pika'].map(m => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
-                </select>
+                <input 
+                  type="text"
+                  placeholder="e.g. ChatGPT, Midjourney"
+                  className="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white w-full" 
+                  value={addForm.aiModel} 
+                  onChange={e => setAddForm({...addForm, aiModel: e.target.value})} 
+                />
               </div>
             </div>
             <input placeholder="Tags (comma separated)" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={addForm.tags} onChange={e => setAddForm({...addForm, tags: e.target.value})} />
