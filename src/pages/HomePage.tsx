@@ -66,6 +66,7 @@ export function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-gray-50 dark:to-black" />
         
         <div className="container max-w-7xl px-4 relative z-10 flex flex-col items-center">
+          {/* Welcome Badge */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -74,10 +75,10 @@ export function HomePage() {
             <Sparkles className="mr-2 h-3.5 w-3.5" />
             <span>Welcome to the future of AI</span>
           </motion.div>
-
+          
           {/* Dynamic Banners Slider */}
           {banners.length > 0 && !searchTerm && !selectedCategory && (
-            <div className="w-full max-w-6xl mx-auto mb-10 overflow-hidden rounded-3xl shadow-lg relative group">
+            <div className="w-full max-w-6xl mx-auto mb-10 overflow-hidden rounded-3xl shadow-2xl relative group border border-gray-200 dark:border-white/10">
               <Swiper
                 modules={[Autoplay, Pagination, Navigation, EffectFade]}
                 effect="fade"
@@ -129,41 +130,41 @@ export function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-6xl md:text-7xl lg:text-8xl font-display font-extrabold tracking-tight mb-8 text-gray-900 dark:text-white transition-colors duration-300"
+            className="text-5xl md:text-7xl lg:text-8xl font-display font-extrabold tracking-tight mb-8 text-gray-900 dark:text-white transition-colors duration-300 leading-[1.1]"
           >
-            Discover & Share
+            Find Perfect Prompts
             <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-500 filter drop-shadow-sm">
-              Premium Prompts
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-500 filter drop-shadow-sm">
+              for Every AI
             </span>
           </motion.h1>
-          
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-xl text-gray-500 dark:text-gray-400 mb-12 max-w-2xl mx-auto transition-colors duration-300 font-medium leading-relaxed"
-          >
-            Elevate your AI generation with our community-curated collection of high-quality prompts for midjourney, chatgpt, and more.
-          </motion.p>
-          
+
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3 }}
-            className="w-full max-w-2xl relative group mx-auto"
+            transition={{ delay: 0.2 }}
+            className="w-full max-w-2xl relative group mx-auto mb-10"
           >
             <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
               <Search className="h-6 w-6 text-gray-400 dark:text-gray-500 group-focus-within:text-blue-600 dark:group-focus-within:text-blue-400 transition-colors duration-300" />
             </div>
             <input
               type="text"
-              placeholder="Search by keyword, tag, or description..."
-              className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-full py-5 pl-16 pr-6 text-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50 dark:focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none transition-all duration-300 font-medium"
+              placeholder="Search prompts for ChatGPT, Midjourney, Flux..."
+              className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl py-6 pl-16 pr-6 text-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50 dark:focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 shadow-[0_20px_50px_rgba(0,0,0,0.08)] dark:shadow-none transition-all duration-300 font-medium"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </motion.div>
+          
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-lg md:text-xl text-gray-500 dark:text-gray-400 mb-12 max-w-2xl mx-auto transition-colors duration-300 font-medium leading-relaxed"
+          >
+            Elevate your AI generation with our community-curated collection of high-quality prompts.
+          </motion.p>
         </div>
       </section>
 
@@ -171,18 +172,18 @@ export function HomePage() {
       <div className="container max-w-7xl mx-auto px-4">
         {/* Categories */}
         {categories.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-6 justify-center">
+          <div className="flex flex-wrap gap-2 mb-10 justify-center">
             <button
               onClick={() => setSelectedCategory(null)}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors duration-300 ${!selectedCategory ? 'bg-gray-900 dark:bg-blue-600 text-white dark:text-white dark:shadow-[0_0_15px_rgba(37,99,235,0.4)]' : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'}`}
+              className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300 border uppercase tracking-wider ${!selectedCategory ? 'bg-gray-900 dark:bg-blue-600 text-white border-transparent shadow-[0_10px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_10px_20px_rgba(37,99,235,0.2)]' : 'bg-white dark:bg-white/5 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'}`}
             >
-              All
+              All Prompts
             </button>
             {categories.map(cat => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors duration-300 ${selectedCategory === cat ? 'bg-gray-900 dark:bg-blue-600 text-white dark:text-white dark:shadow-[0_0_15px_rgba(37,99,235,0.4)]' : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'}`}
+                className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300 border uppercase tracking-wider ${selectedCategory === cat ? 'bg-gray-900 dark:bg-blue-600 text-white border-transparent shadow-[0_10px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_10px_20px_rgba(37,99,235,0.2)]' : 'bg-white dark:bg-white/5 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'}`}
               >
                 {cat}
               </button>
@@ -213,8 +214,8 @@ export function HomePage() {
             )}
 
             <section className="mb-16">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white tracking-tight transition-colors duration-300">Newest Uploads</h2>
+              <div className="flex items-center justify-between mb-8 border-l-4 border-blue-600 pl-4">
+                <h2 className="text-3xl font-display font-bold text-gray-900 dark:text-white tracking-tight transition-colors duration-300">Fresh Resources</h2>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {prompts.slice(0, 12).map(prompt => (
@@ -235,9 +236,11 @@ export function HomePage() {
             
             {featured.length > 0 && (
               <section className="mb-16">
-                <div className="flex items-center gap-2 mb-6">
-                  <Sparkles className="w-6 h-6 text-yellow-500 dark:text-yellow-400" />
-                  <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white tracking-tight transition-colors duration-300">Featured Prompts</h2>
+                <div className="flex items-center gap-2 mb-8 border-l-4 border-yellow-500 pl-4">
+                  <h2 className="text-3xl font-display font-bold text-gray-900 dark:text-white tracking-tight transition-colors duration-300 flex items-center gap-3">
+                    <Sparkles className="w-8 h-8 text-yellow-500" />
+                    Editor's Choice
+                  </h2>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {featured.map(prompt => (
@@ -249,9 +252,8 @@ export function HomePage() {
 
             {trending.length > 0 && (
               <section className="mb-16">
-                <div className="flex items-center gap-2 mb-6">
-                  <Sparkles className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                  <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white tracking-tight transition-colors duration-300">Trending Right Now</h2>
+                <div className="flex items-center gap-2 mb-8 border-l-4 border-purple-600 pl-4">
+                  <h2 className="text-3xl font-display font-bold text-gray-900 dark:text-white tracking-tight transition-colors duration-300">Popular Assets</h2>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {trending.map(prompt => (
@@ -269,7 +271,7 @@ export function HomePage() {
           </div>
         ) : (
           <div>
-            <h2 className="text-2xl font-display font-bold mb-6 text-gray-900 dark:text-white tracking-tight transition-colors duration-300">Search Results</h2>
+            <h2 className="text-3xl font-display font-bold mb-8 text-gray-900 dark:text-white tracking-tight transition-colors duration-300 border-l-4 border-blue-600 pl-4">Results Search</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               <AnimatePresence>
                 {filteredPrompts.map((prompt) => (
