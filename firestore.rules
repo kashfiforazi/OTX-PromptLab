@@ -44,10 +44,7 @@ service cloud.firestore {
     }
 
     match /prompts/{promptId} {
-      allow get: if isValidId(promptId) && (isAdmin() || existing().status == 'approved');
-      
-      // We allow lists for approved, or for all if admin
-      allow list: if isAdmin() || resource.data.status == 'approved';
+      allow read: if isAdmin() || (resource != null && resource.data.status == 'approved');
 
       allow create: if isValidId(promptId) && (
         isAdmin() || 

@@ -73,6 +73,7 @@ export async function fetchPromptBySlug(slug: string) {
     const q = query(
       collection(db, PROMPTS_COLLECTION),
       where('slug', '==', slug),
+      where('status', '==', 'approved'),
       limit(1)
     );
     const snapshot = await getDocs(q);

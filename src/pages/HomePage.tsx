@@ -223,9 +223,13 @@ export function HomePage() {
               </div>
             </section>
             
-            {adsSettings?.enabled && (adsSettings?.googleAdSlotSidebar || adsSettings?.googleAdClient) && (
+            {adsSettings?.enabled && (adsSettings?.adsterraScriptBanner || adsSettings?.googleAdSlotSidebar || adsSettings?.googleAdClient) && (
               <div className="w-full flex justify-center overflow-hidden mb-16">
-                 <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotSidebar || ''} format="horizontal" showPlaceholder={isAdmin} />
+                 {adsSettings.adsterraScriptBanner ? (
+                   <Adsterra scriptHtml={adsSettings.adsterraScriptBanner} />
+                 ) : (
+                   <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotSidebar || ''} format="horizontal" showPlaceholder={isAdmin} />
+                 )}
               </div>
             )}
             

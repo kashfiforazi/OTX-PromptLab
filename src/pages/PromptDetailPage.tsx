@@ -8,7 +8,7 @@ import { AdSense } from '../components/AdSense';
 import { Adsterra } from '../components/Adsterra';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../services/firebase';
-import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
 import { copyToClipboard } from '../utils/copy';
 
 import { SaveButton } from '../components/SaveButton';

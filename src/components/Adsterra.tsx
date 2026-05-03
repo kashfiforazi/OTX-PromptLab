@@ -11,11 +11,12 @@ export function Adsterra({ scriptHtml, showPlaceholder = false, label = "Adverti
   const containerRef = useRef<HTMLDivElement>(null);
   const isLoaded = useRef(false);
   const { isAdmin } = useAuth();
+  const idRef = useRef(`adsterra-${Math.random().toString(36).substr(2, 9)}`);
 
   useEffect(() => {
     if (!scriptHtml || !containerRef.current) return;
 
-    // Clear previous contents
+    // Clear previous contents if script changed or component re-mounted
     containerRef.current.innerHTML = '';
     isLoaded.current = false;
 
@@ -34,6 +35,8 @@ export function Adsterra({ scriptHtml, showPlaceholder = false, label = "Adverti
         if (oldScript.src) {
           newScript.src = oldScript.src;
           newScript.async = true;
+          // Important for some external scripts to have a crossOrigin attribute if they need it
+          newScript.crossOrigin = "anonymous";
         } else {
           newScript.textContent = oldScript.textContent;
         }
@@ -57,7 +60,7 @@ export function Adsterra({ scriptHtml, showPlaceholder = false, label = "Adverti
   if (!scriptHtml && !isAdmin) return null;
 
   return (
-    <div className="w-full flex flex-col items-center justify-center my-4">
+    <div id={idRef.current} className="w-full flex flex-col items-center justify-center my-4 overflow-hidden">
       {label && (
         <div className="text-center mb-2">
           <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-gray-400 dark:text-gray-500">{label}</span>
