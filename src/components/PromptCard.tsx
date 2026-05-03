@@ -90,12 +90,17 @@ export const PromptCard: React.FC<Props> = ({ prompt, onClick }) => {
               />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-80" />
-            <div className="absolute bottom-3 left-3 flex gap-2">
-              <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md font-sans">
+            <div className="absolute bottom-3 left-3 flex flex-wrap gap-2">
+              <span className="rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold text-white backdrop-blur-md font-sans uppercase tracking-wider border border-white/10">
                 {prompt.category}
               </span>
+              {prompt.aiModel && (
+                <span className="rounded-full bg-blue-500/80 px-3 py-1 text-[10px] font-bold text-white backdrop-blur-md font-sans uppercase tracking-wider border border-blue-400/20">
+                  {prompt.aiModel}
+                </span>
+              )}
               {prompt.isTrending && (
-                <span className="rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 px-3 py-1 text-xs font-semibold text-white shadow-lg flex items-center gap-1 font-sans">
+                <span className="rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 px-3 py-1 text-[10px] font-bold text-white shadow-lg flex items-center gap-1 font-sans uppercase tracking-wider">
                   <Sparkles className="w-3 h-3" /> Trending
                 </span>
               )}
@@ -118,6 +123,11 @@ export const PromptCard: React.FC<Props> = ({ prompt, onClick }) => {
                <span className="text-[10px] px-2 py-1 bg-gray-100 dark:bg-white/10 rounded uppercase font-bold text-gray-700 dark:text-white tracking-widest border border-gray-200 dark:border-white/5 font-sans">
                  {prompt.category}
                </span>
+               {prompt.aiModel && (
+                <span className="text-[10px] px-2 py-1 bg-blue-50 dark:bg-blue-500/10 rounded uppercase font-bold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/40 font-sans tracking-widest">
+                  {prompt.aiModel}
+                </span>
+              )}
                {prompt.isTrending && (
                 <span className="text-[10px] px-2 py-1 bg-blue-50 dark:bg-blue-500/20 rounded uppercase font-bold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/40 flex items-center gap-1 font-sans">
                   Trending

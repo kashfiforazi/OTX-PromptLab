@@ -191,7 +191,7 @@ export function HomePage() {
         )}
 
         {loading ? (
-          <div className="space-y-16">
+          <div className="pt-10">
             <section>
               <div className="flex items-center gap-2 mb-6">
                 <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-white/10 animate-pulse"></div>
@@ -205,15 +205,14 @@ export function HomePage() {
             </section>
           </div>
         ) : (!searchTerm && !selectedCategory) ? (
-          <div className="space-y-10">
-            {adsSettings?.enabled && (
-              <div className="w-full flex flex-col gap-6 mb-6">
-                 {adsSettings.adsterraBannerTop && <Adsterra code={adsSettings.adsterraBannerTop} showPlaceholder={isAdmin} />}
-                 {adsSettings.googleAdSlotHead && adsSettings.googleAdClient && <AdSense client={adsSettings.googleAdClient} slot={adsSettings.googleAdSlotHead} />}
+          <div className="flex flex-col">
+            {adsSettings?.enabled && adsSettings?.adsterraScriptBanner && (
+              <div className="w-full flex justify-center mb-10 overflow-hidden">
+                 <Adsterra scriptHtml={adsSettings.adsterraScriptBanner} />
               </div>
             )}
 
-            <section>
+            <section className="mb-16">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white tracking-tight transition-colors duration-300">Newest Uploads</h2>
               </div>
@@ -225,13 +224,13 @@ export function HomePage() {
             </section>
             
             {adsSettings?.enabled && (adsSettings?.googleAdSlotSidebar || adsSettings?.googleAdClient) && (
-              <div className="w-full flex justify-center overflow-hidden my-6">
-                 <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotSidebar || ''} format="horizontal" />
+              <div className="w-full flex justify-center overflow-hidden mb-16">
+                 <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotSidebar || ''} format="horizontal" showPlaceholder={isAdmin} />
               </div>
             )}
             
             {featured.length > 0 && (
-              <section>
+              <section className="mb-16">
                 <div className="flex items-center gap-2 mb-6">
                   <Sparkles className="w-6 h-6 text-yellow-500 dark:text-yellow-400" />
                   <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white tracking-tight transition-colors duration-300">Featured Prompts</h2>
@@ -244,14 +243,8 @@ export function HomePage() {
               </section>
             )}
 
-            {adsSettings?.enabled && (adsSettings?.googleAdSlotSidebar || adsSettings?.googleAdClient) && trending.length > 0 && (
-              <div className="w-full flex justify-center overflow-hidden my-6">
-                 <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotSidebar || ''} format="horizontal" />
-              </div>
-            )}
-            
             {trending.length > 0 && (
-              <section>
+              <section className="mb-16">
                 <div className="flex items-center gap-2 mb-6">
                   <Sparkles className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                   <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white tracking-tight transition-colors duration-300">Trending Right Now</h2>
@@ -264,13 +257,9 @@ export function HomePage() {
               </section>
             )}
 
-            {adsSettings?.enabled && (
-              <div className="w-full flex flex-col gap-6 py-12 border-t border-gray-100 dark:border-white/10 mt-12">
-                <div className="text-center mb-4">
-                  <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-400 dark:text-gray-500">Advertisement</span>
-                </div>
-                {adsSettings.adsterraBannerBottom && <Adsterra code={adsSettings.adsterraBannerBottom} showPlaceholder={isAdmin} />}
-                {adsSettings.googleAdSlotFooter && adsSettings.googleAdClient && <AdSense client={adsSettings.googleAdClient} slot={adsSettings.googleAdSlotFooter} />}
+            {adsSettings?.enabled && adsSettings?.adsterraScriptFooter && (
+              <div className="w-full h-auto py-12 border-t border-gray-100 dark:border-white/10 mt-4 text-center">
+                <Adsterra scriptHtml={adsSettings.adsterraScriptFooter} />
               </div>
             )}
           </div>
@@ -299,9 +288,9 @@ export function HomePage() {
               )}
             </div>
             
-            {adsSettings?.enabled &&(adsSettings?.googleAdSlotFooter || adsSettings?.googleAdClient) && (
+            {adsSettings?.enabled && adsSettings?.adsterraScriptFooter && (
               <div className="w-full flex justify-center mt-16 overflow-hidden">
-                 <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotFooter || ''} />
+                 <Adsterra scriptHtml={adsSettings.adsterraScriptFooter} />
               </div>
             )}
           </div>

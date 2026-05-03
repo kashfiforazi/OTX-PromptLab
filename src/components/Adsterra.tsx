@@ -1,57 +1,69 @@
 import React, { useEffect, useRef } from 'react';
+import { useAuth } from '../hooks/useAuth';
 
 interface AdsterraProps {
-  code?: string;
+  scriptHtml: string;
   showPlaceholder?: boolean;
+  label?: string;
 }
 
-export function Adsterra({ code, showPlaceholder = false }: AdsterraProps) {
+export function Adsterra({ scriptHtml, showPlaceholder = false, label = "Advertisement" }: AdsterraProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const isLoaded = useRef(false);
+  const { isAdmin } = useAuth();
 
   useEffect(() => {
-    if (containerRef.current && code) {
-      // Clear existing content
-      containerRef.current.innerHTML = '';
+    if (!scriptHtml || isLoaded.current || !containerRef.current) return;
+
+    try {
+      // Create a temporary element to parse the HTML
+      const div = document.createElement('div');
+      div.innerHTML = scriptHtml;
       
-      // Some Adsterra codes contain <script> tags. We need to manually execute them.
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = code;
+      const scripts = div.querySelectorAll('script');
       
-      const scripts = Array.from(tempDiv.getElementsByTagName('script'));
-      
-      scripts.forEach((oldScript) => {
+      scripts.forEach(oldScript => {
         const newScript = document.createElement('script');
-        Array.from(oldScript.attributes).forEach((attr) => {
+        Array.from(oldScript.attributes).forEach(attr => {
           newScript.setAttribute(attr.name, attr.value);
         });
-        
-        if (oldScript.innerHTML) {
-          newScript.innerHTML = oldScript.innerHTML;
-        }
-        
-        // We append to the container
+        newScript.textContent = oldScript.textContent;
         containerRef.current?.appendChild(newScript);
       });
 
-      // Handle non-script parts (like <ins> or <div>)
-      Array.from(tempDiv.childNodes).forEach((node) => {
+      // Append non-script elements too
+      Array.from(div.childNodes).forEach(node => {
         if (node.nodeName !== 'SCRIPT') {
           containerRef.current?.appendChild(node.cloneNode(true));
         }
       });
-    }
-  }, [code]);
 
-  if (!code && !showPlaceholder) return null;
+      isLoaded.current = true;
+    } catch (err) {
+      console.error('Error loading Adsterra ad:', err);
+    }
+  }, [scriptHtml]);
+
+  if (!scriptHtml && !isAdmin) return null;
 
   return (
-    <div className="w-full flex flex-col items-center justify-center overflow-hidden relative min-h-[90px]">
-      {showPlaceholder && !code && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-white/5 border-2 border-dashed border-gray-300 dark:border-white/20 rounded-xl">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400 dark:text-gray-500">Adsterra Ad Slot</span>
+    <div className="w-full flex flex-col items-center justify-center my-4">
+      {label && (
+        <div className="text-center mb-2">
+          <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-gray-400 dark:text-gray-500">{label}</span>
         </div>
       )}
-      <div ref={containerRef} className="w-full flex justify-center" />
+      <div 
+        ref={containerRef} 
+        className={`w-full flex justify-center min-h-[50px] relative ${isAdmin && !scriptHtml ? 'border-2 border-dashed border-gray-300 dark:border-white/10 rounded-xl p-8' : ''}`}
+      >
+        {isAdmin && !scriptHtml && (
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-[10px] uppercase font-bold text-gray-400">Adsterra Slot (Empty)</span>
+            <span className="text-[9px] text-gray-400 italic font-mono text-center">Add script in Admin Panel</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

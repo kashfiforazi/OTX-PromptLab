@@ -154,12 +154,10 @@ export interface AdsSettings {
   googleAdSlotHead?: string;
   googleAdSlotSidebar?: string;
   googleAdSlotFooter?: string;
-  adsterraPopunderCode?: string;
-  adsterraSocialBarCode?: string;
-  adsterraBannerTop?: string;
-  adsterraBannerBottom?: string;
-  adsterraBannerSidebar?: string;
-  adsterraBannerInContent?: string;
+  adsterraScriptBanner?: string;
+  adsterraScriptFooter?: string;
+  adsterraScriptPromptTop?: string;
+  adsterraScriptPromptBottom?: string;
   enabled?: boolean;
 }
 

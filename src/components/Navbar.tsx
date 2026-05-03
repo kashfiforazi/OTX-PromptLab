@@ -32,7 +32,7 @@ export function Navbar() {
   };
 
   return (
-    <header className="relative z-20 min-h-16 py-3 sm:py-4 border-b border-gray-200 dark:border-white/10 flex items-center justify-between px-4 sm:px-8 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-md transition-colors duration-300">
+    <header className="sticky top-0 z-50 min-h-16 py-3 sm:py-4 border-b border-gray-200 dark:border-white/10 flex items-center justify-between px-4 sm:px-8 bg-white/80 dark:bg-[#050505]/90 backdrop-blur-md transition-colors duration-300 shadow-sm shadow-black/5 dark:shadow-none">
       <Link 
         to="/"
         onClick={handleLogoClick} 

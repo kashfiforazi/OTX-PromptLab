@@ -25,7 +25,7 @@ export function AdSense({ client, slot, format = 'auto', responsive = 'true', sh
   }, [client, slot]);
 
   return (
-    <div style={{ width: '100%', minHeight: '100px', display: 'flex', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
+    <div className={`w-full flex justify-center overflow-hidden relative ${showPlaceholder ? 'min-h-[100px]' : ''}`}>
       {showPlaceholder && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-white/5 border-2 border-dashed border-gray-300 dark:border-white/20 rounded-xl">
           <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400 dark:text-gray-500">Google AdSense Slot ({slot})</span>
@@ -33,7 +33,7 @@ export function AdSense({ client, slot, format = 'auto', responsive = 'true', sh
       )}
       <ins className="adsbygoogle"
            ref={adRef}
-           style={{ display: 'block', width: '100%', minHeight: '90px', position: 'relative', zIndex: 1 }}
+           style={{ display: 'block', width: '100%', minHeight: showPlaceholder ? '90px' : '0px', position: 'relative', zIndex: 1 }}
            data-ad-client={client}
            data-ad-slot={slot}
            data-ad-format={format}

@@ -14,7 +14,17 @@ export function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'dashboard' | 'submissions' | 'add' | 'edit' | 'settings' | 'ads' | 'banners'>('dashboard');
 
-  const [addForm, setAddForm] = useState({ title: '', slug: '', description: '', promptText: '', mediaUrl: '', items: [] as {promptText: string, mediaUrl: string}[], category: 'Image', tags: '' });
+  const [addForm, setAddForm] = useState({ 
+    title: '', 
+    slug: '', 
+    description: '', 
+    promptText: '', 
+    mediaUrl: '', 
+    items: [] as {promptText: string, mediaUrl: string}[], 
+    category: 'Image', 
+    aiModel: 'ChatGPT',
+    tags: '' 
+  });
   const [addLoading, setAddLoading] = useState(false);
   const [editPromptId, setEditPromptId] = useState<string | null>(null);
 
@@ -41,12 +51,10 @@ export function AdminPage() {
     googleAdSlotHead: '', 
     googleAdSlotSidebar: '', 
     googleAdSlotFooter: '', 
-    adsterraPopunderCode: '',
-    adsterraSocialBarCode: '',
-    adsterraBannerTop: '',
-    adsterraBannerBottom: '',
-    adsterraBannerSidebar: '',
-    adsterraBannerInContent: '',
+    adsterraScriptBanner: '',
+    adsterraScriptFooter: '',
+    adsterraScriptPromptTop: '',
+    adsterraScriptPromptBottom: '',
     enabled: false 
   });
   const [adsLoading, setAdsLoading] = useState(false);
@@ -104,12 +112,10 @@ export function AdminPage() {
           googleAdSlotHead: adsData.googleAdSlotHead || '',
           googleAdSlotSidebar: adsData.googleAdSlotSidebar || '',
           googleAdSlotFooter: adsData.googleAdSlotFooter || '',
-          adsterraPopunderCode: adsData.adsterraPopunderCode || '',
-          adsterraSocialBarCode: adsData.adsterraSocialBarCode || '',
-          adsterraBannerTop: adsData.adsterraBannerTop || '',
-          adsterraBannerBottom: adsData.adsterraBannerBottom || '',
-          adsterraBannerSidebar: adsData.adsterraBannerSidebar || '',
-          adsterraBannerInContent: adsData.adsterraBannerInContent || '',
+          adsterraScriptBanner: adsData.adsterraScriptBanner || '',
+          adsterraScriptFooter: adsData.adsterraScriptFooter || '',
+          adsterraScriptPromptTop: adsData.adsterraScriptPromptTop || '',
+          adsterraScriptPromptBottom: adsData.adsterraScriptPromptBottom || '',
           enabled: adsData.enabled || false
         });
       }
@@ -211,6 +217,8 @@ export function AdminPage() {
         tags: addForm.tags.split(',').map(t => t.trim()).filter(Boolean),
         mediaUrl: addForm.mediaUrl || undefined,
         items: addForm.items.filter(i => i.promptText.trim() !== ''),
+        category: addForm.category,
+        aiModel: addForm.aiModel,
         status: 'approved',
         isFeatured: false,
         isTrending: false,
@@ -238,6 +246,7 @@ export function AdminPage() {
         tags: addForm.tags.split(',').map(t => t.trim()).filter(Boolean),
         mediaUrl: addForm.mediaUrl || undefined,
         items: addForm.items.filter(i => i.promptText.trim() !== ''),
+        aiModel: addForm.aiModel,
       });
       setAddForm({ title: '', slug: '', description: '', promptText: '', mediaUrl: '', items: [], category: 'Image', tags: '' });
       setEditPromptId(null);
@@ -260,6 +269,7 @@ export function AdminPage() {
       mediaUrl: p.mediaUrl || '',
       items: p.items || [],
       category: p.category,
+      aiModel: p.aiModel || 'ChatGPT',
       tags: p.tags.join(', ')
     });
     setView('edit');
@@ -285,7 +295,7 @@ export function AdminPage() {
     setAdsLoading(true);
     try {
       await updateAdsSettings(adsForm);
-      alert('Advertising settings updated successfully!');
+      alert('Google Ads settings updated successfully!');
     } catch(err) {
       console.error(err);
     } finally {
@@ -520,8 +530,8 @@ export function AdminPage() {
         <div className="bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 p-8 rounded-2xl max-w-3xl shadow-sm relative overflow-hidden transition-colors duration-300">
           <div className="flex items-center justify-between mb-6 border-b border-gray-200 dark:border-white/10 pb-4">
              <div>
-               <h2 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">Advertising Strategy</h2>
-               <p className="text-sm text-gray-500 mt-1">Configure Google AdSense or Adsterra scripts below.</p>
+               <h2 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">Monetization Setup</h2>
+               <p className="text-sm text-gray-500 mt-1">Configure Adsterra or Google AdSense scripts here.</p>
              </div>
              <label className="flex items-center cursor-pointer">
                 <div className="relative">
@@ -530,66 +540,59 @@ export function AdminPage() {
                   <div className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${adsForm.enabled ? 'transform translate-x-6' : ''}`}></div>
                 </div>
                 <div className="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">
-                  {adsForm.enabled ? 'Enabled' : 'Disabled'}
+                  {adsForm.enabled ? 'Ads Enabled' : 'Ads Disabled'}
                 </div>
              </label>
           </div>
-          <form onSubmit={handleAdsSubmit} className="space-y-8 relative z-10">
-            <div className="space-y-5">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white border-b border-gray-100 dark:border-white/5 pb-2">Google AdSense (Optional)</h3>
-              <div>
-                <label className="block text-sm font-bold text-gray-900 dark:text-gray-200 mb-1">Google Ad Client ID</label>
-                <input placeholder="ca-pub-XXXXXXXXXXXXX" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={adsForm.googleAdClient || ''} onChange={e => setAdsForm({...adsForm, googleAdClient: e.target.value})} />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <form onSubmit={handleAdsSubmit} className="space-y-6 relative z-10">
+            <div className="p-4 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-gray-200 mb-4">Adsterra / Generic Scripts (Full HTML)</h3>
+              <div className="space-y-4">
                 <div>
-                   <label className="block text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1">Top Slot</label>
-                   <input placeholder="1234567890" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-2.5 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-xs" value={adsForm.googleAdSlotHead || ''} onChange={e => setAdsForm({...adsForm, googleAdSlotHead: e.target.value})} />
+                  <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Navbar/Banner Ad Script</label>
+                  <textarea rows={3} placeholder="Paste ad script here..." className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 outline-none transition-all text-xs font-mono text-gray-900 dark:text-white" value={adsForm.adsterraScriptBanner || ''} onChange={e => setAdsForm({...adsForm, adsterraScriptBanner: e.target.value})} />
                 </div>
                 <div>
-                   <label className="block text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1">Footer Slot</label>
-                   <input placeholder="1122334455" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-2.5 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-xs" value={adsForm.googleAdSlotFooter || ''} onChange={e => setAdsForm({...adsForm, googleAdSlotFooter: e.target.value})} />
+                  <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Footer Ad Script</label>
+                  <textarea rows={3} placeholder="Paste ad script here..." className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 outline-none transition-all text-xs font-mono text-gray-900 dark:text-white" value={adsForm.adsterraScriptFooter || ''} onChange={e => setAdsForm({...adsForm, adsterraScriptFooter: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Prompt Detail (Top) Ad Script</label>
+                  <textarea rows={3} placeholder="Paste ad script here..." className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 outline-none transition-all text-xs font-mono text-gray-900 dark:text-white" value={adsForm.adsterraScriptPromptTop || ''} onChange={e => setAdsForm({...adsForm, adsterraScriptPromptTop: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Prompt Detail (Bottom) Ad Script</label>
+                  <textarea rows={3} placeholder="Paste ad script here..." className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 outline-none transition-all text-xs font-mono text-gray-900 dark:text-white" value={adsForm.adsterraScriptPromptBottom || ''} onChange={e => setAdsForm({...adsForm, adsterraScriptPromptBottom: e.target.value})} />
                 </div>
               </div>
             </div>
 
-            <div className="space-y-5 pt-8 border-t border-gray-100 dark:border-white/5">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white border-b border-gray-100 dark:border-white/5 pb-2">Adsterra Integration</h3>
-              
+            <div className="p-4 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-gray-200 mb-4">Google AdSense (Optional Fallback)</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-900 dark:text-gray-200 mb-1">Popunder Script Code</label>
-                  <textarea placeholder="Paste full script code here..." rows={2} className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl font-mono text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-blue-500" value={adsForm.adsterraPopunderCode || ''} onChange={e => setAdsForm({...adsForm, adsterraPopunderCode: e.target.value})} />
+                  <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Google Ad Client ID</label>
+                  <input placeholder="ca-pub-XXXXXXXXXXXXX" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white" value={adsForm.googleAdClient || ''} onChange={e => setAdsForm({...adsForm, googleAdClient: e.target.value})} />
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-900 dark:text-gray-200 mb-1">Social Bar Script Code</label>
-                  <textarea placeholder="Paste full script code here..." rows={2} className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl font-mono text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-blue-500" value={adsForm.adsterraSocialBarCode || ''} onChange={e => setAdsForm({...adsForm, adsterraSocialBarCode: e.target.value})} />
-                </div>
-                
-                <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400 mt-4">Banner Ad Slots (Native/Banners)</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1">Top Banner Code</label>
-                    <textarea placeholder="Native/Banner code" rows={3} className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-2 rounded-xl font-mono text-[10px]" value={adsForm.adsterraBannerTop || ''} onChange={e => setAdsForm({...adsForm, adsterraBannerTop: e.target.value})} />
+                    <label className="block text-[10px] font-bold text-gray-500 uppercase">Head Slot</label>
+                    <input placeholder="12345" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-3 py-2 rounded-lg text-xs" value={adsForm.googleAdSlotHead || ''} onChange={e => setAdsForm({...adsForm, googleAdSlotHead: e.target.value})} />
                   </div>
                   <div>
-                    <label className="block text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1">Bottom/Footer Code</label>
-                    <textarea placeholder="Native/Banner code" rows={3} className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-2 rounded-xl font-mono text-[10px]" value={adsForm.adsterraBannerBottom || ''} onChange={e => setAdsForm({...adsForm, adsterraBannerBottom: e.target.value})} />
+                    <label className="block text-[10px] font-bold text-gray-500 uppercase">Sidebar Slot</label>
+                    <input placeholder="23456" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-3 py-2 rounded-lg text-xs" value={adsForm.googleAdSlotSidebar || ''} onChange={e => setAdsForm({...adsForm, googleAdSlotSidebar: e.target.value})} />
                   </div>
                   <div>
-                    <label className="block text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1">Sidebar Code</label>
-                    <textarea placeholder="Native/Banner code" rows={3} className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-2 rounded-xl font-mono text-[10px]" value={adsForm.adsterraBannerSidebar || ''} onChange={e => setAdsForm({...adsForm, adsterraBannerSidebar: e.target.value})} />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1">In-Content Code</label>
-                    <textarea placeholder="Native/Banner code" rows={3} className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-2 rounded-xl font-mono text-[10px]" value={adsForm.adsterraBannerInContent || ''} onChange={e => setAdsForm({...adsForm, adsterraBannerInContent: e.target.value})} />
+                    <label className="block text-[10px] font-bold text-gray-500 uppercase">Footer Slot</label>
+                    <input placeholder="34567" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-3 py-2 rounded-lg text-xs" value={adsForm.googleAdSlotFooter || ''} onChange={e => setAdsForm({...adsForm, googleAdSlotFooter: e.target.value})} />
                   </div>
                 </div>
               </div>
             </div>
             
-            <button type="submit" disabled={adsLoading} className="bg-gray-900 dark:bg-white text-white dark:text-black py-4 px-6 rounded-xl font-black text-sm tracking-widest uppercase hover:bg-gray-800 dark:hover:bg-gray-200 transition-all w-full mt-6 shadow-glow transition-colors duration-300">
-              {adsLoading ? "Saving..." : "Synchronize All Ads Settings"}
+            <button type="submit" disabled={adsLoading} className="bg-gray-900 dark:bg-white text-white dark:text-black py-4 px-6 rounded-xl font-black text-sm tracking-widest uppercase hover:bg-gray-800 dark:hover:bg-gray-200 transition-all w-full mt-6 shadow-sm">
+              {adsLoading ? "Saving..." : "Save Monetization Setup"}
             </button>
           </form>
         </div>
@@ -628,10 +631,21 @@ export function AdminPage() {
             ))}
             <button type="button" onClick={() => setAddForm({...addForm, items: [...addForm.items, {promptText: '', mediaUrl: ''}]})} className="text-blue-500 text-sm font-bold flex items-center"><Plus className="w-4 h-4 mr-1"/> Add Sub-Prompt</button>
 
-            <div className="flex flex-col md:flex-row gap-4">
-              <select className="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl min-w-[150px] focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white appearance-none cursor-pointer w-full" value={addForm.category} onChange={e => setAddForm({...addForm, category: e.target.value})}>
-                {['Image','Video','Logo','Gaming','Banner','Thumbnail'].map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-gray-500">Category</label>
+                <select className="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white appearance-none cursor-pointer w-full" value={addForm.category} onChange={e => setAddForm({...addForm, category: e.target.value})}>
+                  {['Image','Video','Logo','Gaming','Banner','Thumbnail', 'Writing', 'Code'].map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-gray-500">AI Model</label>
+                <select className="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white appearance-none cursor-pointer w-full" value={addForm.aiModel} onChange={e => setAddForm({...addForm, aiModel: e.target.value})}>
+                  {['ChatGPT', 'Midjourney', 'DALL-E', 'Claude', 'Stable Diffusion', 'Gemini', 'Llama', 'Flux', 'Veed', 'Canva', 'Sora', 'Leonardo AI', 'PixVerse', 'Runway', 'Pika'].map(m => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             <input placeholder="Tags (comma separated)" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={addForm.tags} onChange={e => setAddForm({...addForm, tags: e.target.value})} />
             <button type="submit" disabled={addLoading} className="bg-blue-600 dark:bg-blue-500 text-white py-4 px-6 rounded-xl font-black text-sm tracking-widest uppercase hover:bg-blue-700 dark:hover:bg-blue-600 transition-all w-full mt-4 shadow-sm">

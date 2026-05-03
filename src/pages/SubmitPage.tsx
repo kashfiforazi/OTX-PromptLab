@@ -21,6 +21,7 @@ export function SubmitPage() {
     mediaUrl: '',
     items: [] as {promptText: string, mediaUrl: string}[],
     category: 'Image',
+    aiModel: 'ChatGPT',
     tags: ''
   });
 
@@ -67,6 +68,7 @@ export function SubmitPage() {
         mediaUrl: formData.mediaUrl || undefined,
         items: formData.items.filter(i => i.promptText.trim() !== ''),
         category: formData.category,
+        aiModel: formData.aiModel,
         tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
         status: isAdmin ? 'approved' : 'pending',
         isFeatured: false,
@@ -246,15 +248,30 @@ export function SubmitPage() {
               </button>
             </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-gray-400 font-bold transition-colors duration-300">Category</label>
-                <select
-                  className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-sm cursor-pointer"
-                  value={formData.category}
-                  onChange={e => setFormData({ ...formData, category: e.target.value })}
-                >
-                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-gray-400 font-bold transition-colors duration-300">Category</label>
+                  <select
+                    className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-sm cursor-pointer"
+                    value={formData.category}
+                    onChange={e => setFormData({ ...formData, category: e.target.value })}
+                  >
+                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-gray-400 font-bold transition-colors duration-300">AI Model</label>
+                  <select
+                    className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-sm cursor-pointer"
+                    value={formData.aiModel}
+                    onChange={e => setFormData({ ...formData, aiModel: e.target.value })}
+                  >
+                    {['ChatGPT', 'Midjourney', 'DALL-E', 'Claude', 'Stable Diffusion', 'Gemini', 'Llama', 'Flux', 'Veed', 'Canva', 'Sora', 'Leonardo AI', 'PixVerse', 'Runway', 'Pika'].map(m => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
             <div className="space-y-2">

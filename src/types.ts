@@ -17,6 +17,7 @@ export interface Prompt {
   status: PromptStatus;
   isFeatured: boolean;
   isTrending: boolean;
+  aiModel?: string;
   slug: string;
   viewCount: number;
   copyCount: number;

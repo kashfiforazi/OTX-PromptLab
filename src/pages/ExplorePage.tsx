@@ -7,17 +7,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAds } from '../contexts/AdsContext';
 import { AdSense } from '../components/AdSense';
 import { Adsterra } from '../components/Adsterra';
-import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
 export function ExplorePage() {
   const { settings: adsSettings } = useAds();
-  const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadPrompts() {
@@ -34,13 +33,16 @@ export function ExplorePage() {
   }, []);
 
   const categories = Array.from(new Set(prompts.map(p => p.category)));
+  const aiModels = Array.from(new Set(prompts.map(p => p.aiModel).filter(Boolean)));
 
   const filteredPrompts = prompts.filter(p => {
     const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           p.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          p.aiModel?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           p.tags.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = selectedCategory ? p.category === selectedCategory : true;
-    return matchesSearch && matchesCategory;
+    const matchesModel = selectedModel ? p.aiModel === selectedModel : true;
+    return matchesSearch && matchesCategory && matchesModel;
   });
 
   return (
@@ -63,25 +65,53 @@ export function ExplorePage() {
             />
           </div>
 
-          {categories.length > 0 && (
-            <div className="flex flex-wrap gap-2 justify-center">
-              <button
-                onClick={() => setSelectedCategory(null)}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors duration-300 ${!selectedCategory ? 'bg-gray-900 dark:bg-white text-white dark:text-black shadow-sm' : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'}`}
-              >
-                All
-              </button>
-              {categories.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors duration-300 ${selectedCategory === cat ? 'bg-gray-900 dark:bg-white text-white dark:text-black shadow-sm' : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'}`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="flex flex-col gap-6 w-full">
+            {aiModels.length > 0 && (
+              <div className="flex flex-col items-center">
+                <span className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-[0.2em] mb-3">Filter by AI Model</span>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <button
+                    onClick={() => setSelectedModel(null)}
+                    className={`px-4 py-2 rounded-full text-xs font-bold transition-colors duration-300 border uppercase tracking-wider ${!selectedModel ? 'bg-blue-600 border-transparent text-white shadow-lg shadow-blue-500/20' : 'bg-white dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 border-gray-200 dark:border-white/10'}`}
+                  >
+                    All AI
+                  </button>
+                  {aiModels.map(model => (
+                    <button
+                      key={model}
+                      onClick={() => setSelectedModel(model as string)}
+                      className={`px-4 py-2 rounded-full text-xs font-bold transition-colors duration-300 border uppercase tracking-wider ${selectedModel === model ? 'bg-blue-600 border-transparent text-white shadow-lg shadow-blue-500/20' : 'bg-white dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 border-gray-200 dark:border-white/10'}`}
+                    >
+                      {model}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {categories.length > 0 && (
+              <div className="flex flex-col items-center">
+                <span className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-[0.2em] mb-3">Categories</span>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <button
+                    onClick={() => setSelectedCategory(null)}
+                    className={`px-4 py-2 rounded-full text-xs font-bold transition-colors duration-300 border uppercase tracking-wider ${!selectedCategory ? 'bg-gray-900 dark:bg-white text-white dark:text-black shadow-sm' : 'bg-white dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 border-gray-200 dark:border-white/10'}`}
+                  >
+                    All Types
+                  </button>
+                  {categories.map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`px-4 py-2 rounded-full text-xs font-bold transition-colors duration-300 border uppercase tracking-wider ${selectedCategory === cat ? 'bg-gray-900 dark:bg-white text-white dark:text-black shadow-sm' : 'bg-white dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 border-gray-200 dark:border-white/10'}`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -101,10 +131,9 @@ export function ExplorePage() {
               </h2>
             </div>
 
-            {adsSettings?.enabled && (
-              <div className="w-full flex flex-col gap-6 py-8 mb-8 border-b border-gray-100 dark:border-white/10">
-                 {adsSettings.adsterraBannerTop && <Adsterra code={adsSettings.adsterraBannerTop} showPlaceholder={isAdmin} />}
-                 {adsSettings.googleAdSlotSidebar && adsSettings.googleAdClient && <AdSense client={adsSettings.googleAdClient} slot={adsSettings.googleAdSlotSidebar} format="horizontal" />}
+            {adsSettings?.enabled && adsSettings?.adsterraScriptBanner && (
+              <div className="w-full h-auto py-8 mb-8 border-b border-gray-100 dark:border-white/10">
+                 <Adsterra scriptHtml={adsSettings.adsterraScriptBanner} />
               </div>
             )}
 
@@ -130,10 +159,9 @@ export function ExplorePage() {
               )}
             </div>
             
-            {adsSettings?.enabled && (
-              <div className="w-full flex flex-col items-center mt-16 overflow-hidden">
-                {adsSettings.adsterraBannerBottom && <Adsterra code={adsSettings.adsterraBannerBottom} showPlaceholder={isAdmin} />}
-                {adsSettings.googleAdSlotFooter && adsSettings.googleAdClient && <AdSense client={adsSettings.googleAdClient} slot={adsSettings.googleAdSlotFooter} />}
+            {adsSettings?.enabled && adsSettings?.adsterraScriptFooter && (
+              <div className="w-full flex justify-center mt-16 overflow-hidden">
+                 <Adsterra scriptHtml={adsSettings.adsterraScriptFooter} />
               </div>
             )}
           </div>

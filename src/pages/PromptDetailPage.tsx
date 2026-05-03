@@ -127,7 +127,12 @@ export function PromptDetailPage() {
 
   return (
     <div className="min-h-screen pb-20 bg-gray-50 dark:bg-black transition-colors duration-300">
-      <div className="container max-w-4xl mx-auto px-4 pt-12 md:pt-20">
+        <div className="container max-w-4xl mx-auto px-4 pt-12 md:pt-20">
+          <div className="w-full mb-8">
+            {adsSettings?.enabled && adsSettings?.adsterraScriptPromptTop && (
+              <Adsterra scriptHtml={adsSettings.adsterraScriptPromptTop} />
+            )}
+          </div>
         <button 
           onClick={() => navigate(-1)} 
           className="mb-8 flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors uppercase tracking-widest"
@@ -151,6 +156,9 @@ export function PromptDetailPage() {
             <div className="flex items-start justify-between flex-wrap gap-4 mb-6">
               <div className="flex flex-wrap gap-2">
                 <span className="bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">{prompt.category}</span>
+                {prompt.aiModel && (
+                  <span className="bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">{prompt.aiModel}</span>
+                )}
                 {prompt.tags.map(tag => (
                   <span key={tag} className="bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-white/10 px-3 py-1 rounded-full text-xs font-medium">#{tag}</span>
                 ))}
@@ -172,11 +180,10 @@ export function PromptDetailPage() {
 
             <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed mb-8 font-sans">{prompt.description}</p>
             
-            {/* Ad Slot #1 - Top/Middle */}
-            {adsSettings?.enabled && (
-              <div className="w-full flex flex-col gap-6 py-8 mb-8 border-y border-gray-100 dark:border-white/10">
-                {adsSettings.adsterraBannerInContent && <Adsterra code={adsSettings.adsterraBannerInContent} showPlaceholder={isAdmin} />}
-                {adsSettings.googleAdSlotSidebar && adsSettings.googleAdClient && <AdSense client={adsSettings.googleAdClient} slot={adsSettings.googleAdSlotSidebar} format="horizontal" />}
+            {/* Ad Slot #1 - Middle */}
+            {adsSettings?.enabled && adsSettings?.adsterraScriptPromptTop && (
+              <div className="w-full h-auto py-8 mb-8 border-y border-gray-100 dark:border-white/10">
+                <Adsterra scriptHtml={adsSettings.adsterraScriptPromptTop} label="Content Top Ad" />
               </div>
             )}
 
@@ -229,13 +236,9 @@ export function PromptDetailPage() {
         </div>
 
         {/* Ad Slot #2 - Bottom */}
-        {adsSettings?.enabled && (
+        {adsSettings?.enabled && adsSettings?.adsterraScriptPromptBottom && (
           <div className="w-full flex flex-col items-center mt-16 overflow-hidden">
-             <div className="text-center mb-4">
-                <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-400 dark:text-gray-500">Advertisement</span>
-             </div>
-             {adsSettings.adsterraBannerBottom && <Adsterra code={adsSettings.adsterraBannerBottom} showPlaceholder={isAdmin} />}
-             {adsSettings.googleAdSlotFooter && adsSettings.googleAdClient && <AdSense client={adsSettings.googleAdClient} slot={adsSettings.googleAdSlotFooter} showPlaceholder={isAdmin} />}
+             <Adsterra scriptHtml={adsSettings.adsterraScriptPromptBottom} label="Content Bottom Ad" />
           </div>
         )}
       </div>
