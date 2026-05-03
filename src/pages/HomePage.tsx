@@ -22,7 +22,23 @@ export function HomePage() {
   const { settings: adsSettings } = useAds();
   const { isAdmin } = useAuth();
   const [prompts, setPrompts] = useState<Prompt[]>([]);
-  const [banners, setBanners] = useState<Banner[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([
+    {
+      title: 'Master the Art of AI Generation',
+      imageUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=1600',
+      link: '/explore'
+    },
+    {
+      title: 'Premium Prompts for Midjourney & ChatGPT',
+      imageUrl: 'https://images.unsplash.com/photo-1620712943543-bcc4638d002a?auto=format&fit=crop&q=80&w=1600',
+      link: '/explore'
+    },
+    {
+      title: 'Join Our Creative AI Community',
+      imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1600',
+      link: '/explore'
+    }
+  ]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
