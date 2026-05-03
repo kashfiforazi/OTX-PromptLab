@@ -36,7 +36,19 @@ export function AdminPage() {
   const [siteForm, setSiteForm] = useState<SiteSettings>({ logoUrl: '', siteName: '' });
   const [siteLoading, setSiteLoading] = useState(false);
 
-  const [adsForm, setAdsForm] = useState<AdsSettings>({ googleAdClient: '', googleAdSlotHead: '', googleAdSlotSidebar: '', googleAdSlotFooter: '', enabled: false });
+  const [adsForm, setAdsForm] = useState<AdsSettings>({ 
+    googleAdClient: '', 
+    googleAdSlotHead: '', 
+    googleAdSlotSidebar: '', 
+    googleAdSlotFooter: '', 
+    adsterraPopunderCode: '',
+    adsterraSocialBarCode: '',
+    adsterraBannerTop: '',
+    adsterraBannerBottom: '',
+    adsterraBannerSidebar: '',
+    adsterraBannerInContent: '',
+    enabled: false 
+  });
   const [adsLoading, setAdsLoading] = useState(false);
   
   const [banners, setBanners] = useState<Banner[]>([
@@ -92,6 +104,12 @@ export function AdminPage() {
           googleAdSlotHead: adsData.googleAdSlotHead || '',
           googleAdSlotSidebar: adsData.googleAdSlotSidebar || '',
           googleAdSlotFooter: adsData.googleAdSlotFooter || '',
+          adsterraPopunderCode: adsData.adsterraPopunderCode || '',
+          adsterraSocialBarCode: adsData.adsterraSocialBarCode || '',
+          adsterraBannerTop: adsData.adsterraBannerTop || '',
+          adsterraBannerBottom: adsData.adsterraBannerBottom || '',
+          adsterraBannerSidebar: adsData.adsterraBannerSidebar || '',
+          adsterraBannerInContent: adsData.adsterraBannerInContent || '',
           enabled: adsData.enabled || false
         });
       }
@@ -267,7 +285,7 @@ export function AdminPage() {
     setAdsLoading(true);
     try {
       await updateAdsSettings(adsForm);
-      alert('Google Ads settings updated successfully!');
+      alert('Advertising settings updated successfully!');
     } catch(err) {
       console.error(err);
     } finally {
@@ -502,8 +520,8 @@ export function AdminPage() {
         <div className="bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 p-8 rounded-2xl max-w-3xl shadow-sm relative overflow-hidden transition-colors duration-300">
           <div className="flex items-center justify-between mb-6 border-b border-gray-200 dark:border-white/10 pb-4">
              <div>
-               <h2 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">Google Ads Setup</h2>
-               <p className="text-sm text-gray-500 mt-1">Configure your AdSense client ID and ad slots here.</p>
+               <h2 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">Advertising Strategy</h2>
+               <p className="text-sm text-gray-500 mt-1">Configure Google AdSense or Adsterra scripts below.</p>
              </div>
              <label className="flex items-center cursor-pointer">
                 <div className="relative">
@@ -516,33 +534,62 @@ export function AdminPage() {
                 </div>
              </label>
           </div>
-          <form onSubmit={handleAdsSubmit} className="space-y-5 relative z-10">
-            <div>
-              <label className="block text-sm font-bold text-gray-900 dark:text-gray-200 mb-1">Google Ad Client ID (data-ad-client)</label>
-              <input placeholder="ca-pub-XXXXXXXXXXXXX" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={adsForm.googleAdClient || ''} onChange={e => setAdsForm({...adsForm, googleAdClient: e.target.value})} />
-              <p className="text-xs text-gray-500 mt-1">Found in your AdSense code snippet.</p>
+          <form onSubmit={handleAdsSubmit} className="space-y-8 relative z-10">
+            <div className="space-y-5">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white border-b border-gray-100 dark:border-white/5 pb-2">Google AdSense (Optional)</h3>
+              <div>
+                <label className="block text-sm font-bold text-gray-900 dark:text-gray-200 mb-1">Google Ad Client ID</label>
+                <input placeholder="ca-pub-XXXXXXXXXXXXX" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={adsForm.googleAdClient || ''} onChange={e => setAdsForm({...adsForm, googleAdClient: e.target.value})} />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                   <label className="block text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1">Top Slot</label>
+                   <input placeholder="1234567890" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-2.5 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-xs" value={adsForm.googleAdSlotHead || ''} onChange={e => setAdsForm({...adsForm, googleAdSlotHead: e.target.value})} />
+                </div>
+                <div>
+                   <label className="block text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1">Footer Slot</label>
+                   <input placeholder="1122334455" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-2.5 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-xs" value={adsForm.googleAdSlotFooter || ''} onChange={e => setAdsForm({...adsForm, googleAdSlotFooter: e.target.value})} />
+                </div>
+              </div>
             </div>
-            
-            <div className="pt-4 border-t border-gray-200 dark:border-white/10">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-gray-200 mb-4">Ad Slots (data-ad-slot)</h3>
+
+            <div className="space-y-5 pt-8 border-t border-gray-100 dark:border-white/5">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white border-b border-gray-100 dark:border-white/5 pb-2">Adsterra Integration</h3>
+              
               <div className="space-y-4">
                 <div>
-                   <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Top Banner Ad Slot</label>
-                   <input placeholder="1234567890" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={adsForm.googleAdSlotHead || ''} onChange={e => setAdsForm({...adsForm, googleAdSlotHead: e.target.value})} />
+                  <label className="block text-sm font-bold text-gray-900 dark:text-gray-200 mb-1">Popunder Script Code</label>
+                  <textarea placeholder="Paste full script code here..." rows={2} className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl font-mono text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-blue-500" value={adsForm.adsterraPopunderCode || ''} onChange={e => setAdsForm({...adsForm, adsterraPopunderCode: e.target.value})} />
                 </div>
                 <div>
-                   <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Sidebar Ad Slot</label>
-                   <input placeholder="0987654321" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={adsForm.googleAdSlotSidebar || ''} onChange={e => setAdsForm({...adsForm, googleAdSlotSidebar: e.target.value})} />
+                  <label className="block text-sm font-bold text-gray-900 dark:text-gray-200 mb-1">Social Bar Script Code</label>
+                  <textarea placeholder="Paste full script code here..." rows={2} className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl font-mono text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-blue-500" value={adsForm.adsterraSocialBarCode || ''} onChange={e => setAdsForm({...adsForm, adsterraSocialBarCode: e.target.value})} />
                 </div>
-                <div>
-                   <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Footer/In-feed Ad Slot</label>
-                   <input placeholder="1122334455" className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-3 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" value={adsForm.googleAdSlotFooter || ''} onChange={e => setAdsForm({...adsForm, googleAdSlotFooter: e.target.value})} />
+                
+                <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400 mt-4">Banner Ad Slots (Native/Banners)</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1">Top Banner Code</label>
+                    <textarea placeholder="Native/Banner code" rows={3} className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-2 rounded-xl font-mono text-[10px]" value={adsForm.adsterraBannerTop || ''} onChange={e => setAdsForm({...adsForm, adsterraBannerTop: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1">Bottom/Footer Code</label>
+                    <textarea placeholder="Native/Banner code" rows={3} className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-2 rounded-xl font-mono text-[10px]" value={adsForm.adsterraBannerBottom || ''} onChange={e => setAdsForm({...adsForm, adsterraBannerBottom: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1">Sidebar Code</label>
+                    <textarea placeholder="Native/Banner code" rows={3} className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-2 rounded-xl font-mono text-[10px]" value={adsForm.adsterraBannerSidebar || ''} onChange={e => setAdsForm({...adsForm, adsterraBannerSidebar: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1">In-Content Code</label>
+                    <textarea placeholder="Native/Banner code" rows={3} className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/20 px-4 py-2 rounded-xl font-mono text-[10px]" value={adsForm.adsterraBannerInContent || ''} onChange={e => setAdsForm({...adsForm, adsterraBannerInContent: e.target.value})} />
+                  </div>
                 </div>
               </div>
             </div>
             
-            <button type="submit" disabled={adsLoading} className="bg-gray-900 dark:bg-white text-white dark:text-black py-4 px-6 rounded-xl font-black text-sm tracking-widest uppercase hover:bg-gray-800 dark:hover:bg-gray-200 transition-all w-full mt-6 shadow-sm">
-              {adsLoading ? "Saving..." : "Save Ads Setup"}
+            <button type="submit" disabled={adsLoading} className="bg-gray-900 dark:bg-white text-white dark:text-black py-4 px-6 rounded-xl font-black text-sm tracking-widest uppercase hover:bg-gray-800 dark:hover:bg-gray-200 transition-all w-full mt-6 shadow-glow transition-colors duration-300">
+              {adsLoading ? "Saving..." : "Synchronize All Ads Settings"}
             </button>
           </form>
         </div>

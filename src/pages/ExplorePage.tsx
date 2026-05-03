@@ -6,10 +6,13 @@ import { Search, Loader2, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAds } from '../contexts/AdsContext';
 import { AdSense } from '../components/AdSense';
+import { Adsterra } from '../components/Adsterra';
+import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
 export function ExplorePage() {
   const { settings: adsSettings } = useAds();
+  const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,9 +101,10 @@ export function ExplorePage() {
               </h2>
             </div>
 
-            {adsSettings?.enabled && (adsSettings?.googleAdSlotSidebar || adsSettings?.googleAdClient) && (
-              <div className="w-full h-auto py-8 mb-8 border-b border-gray-100 dark:border-white/10">
-                 <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotSidebar || ''} format="horizontal" />
+            {adsSettings?.enabled && (
+              <div className="w-full flex flex-col gap-6 py-8 mb-8 border-b border-gray-100 dark:border-white/10">
+                 {adsSettings.adsterraBannerTop && <Adsterra code={adsSettings.adsterraBannerTop} showPlaceholder={isAdmin} />}
+                 {adsSettings.googleAdSlotSidebar && adsSettings.googleAdClient && <AdSense client={adsSettings.googleAdClient} slot={adsSettings.googleAdSlotSidebar} format="horizontal" />}
               </div>
             )}
 
@@ -126,9 +130,10 @@ export function ExplorePage() {
               )}
             </div>
             
-            {adsSettings?.enabled &&(adsSettings?.googleAdSlotFooter || adsSettings?.googleAdClient) && (
-              <div className="w-full flex justify-center mt-16 overflow-hidden">
-                 <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotFooter || ''} />
+            {adsSettings?.enabled && (
+              <div className="w-full flex flex-col items-center mt-16 overflow-hidden">
+                {adsSettings.adsterraBannerBottom && <Adsterra code={adsSettings.adsterraBannerBottom} showPlaceholder={isAdmin} />}
+                {adsSettings.googleAdSlotFooter && adsSettings.googleAdClient && <AdSense client={adsSettings.googleAdClient} slot={adsSettings.googleAdSlotFooter} />}
               </div>
             )}
           </div>

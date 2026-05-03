@@ -5,6 +5,7 @@ import { fetchPrompts, fetchPromptBySlug } from '../services/api';
 import { Loader2, ArrowLeft, Copy, Check, Play, Share2, ShieldCheck, User } from 'lucide-react';
 import { useAds } from '../contexts/AdsContext';
 import { AdSense } from '../components/AdSense';
+import { Adsterra } from '../components/Adsterra';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../services/firebase';
 import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
@@ -171,10 +172,11 @@ export function PromptDetailPage() {
 
             <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed mb-8 font-sans">{prompt.description}</p>
             
-            {/* Ad Slot #1 - Middle */}
-            {adsSettings?.enabled && (adsSettings?.googleAdSlotSidebar || adsSettings?.googleAdClient) && (
-              <div className="w-full h-auto py-8 mb-8 border-y border-gray-100 dark:border-white/10">
-                <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotSidebar || ''} format="horizontal" showPlaceholder={isAdmin} />
+            {/* Ad Slot #1 - Top/Middle */}
+            {adsSettings?.enabled && (
+              <div className="w-full flex flex-col gap-6 py-8 mb-8 border-y border-gray-100 dark:border-white/10">
+                {adsSettings.adsterraBannerInContent && <Adsterra code={adsSettings.adsterraBannerInContent} showPlaceholder={isAdmin} />}
+                {adsSettings.googleAdSlotSidebar && adsSettings.googleAdClient && <AdSense client={adsSettings.googleAdClient} slot={adsSettings.googleAdSlotSidebar} format="horizontal" />}
               </div>
             )}
 
@@ -227,12 +229,13 @@ export function PromptDetailPage() {
         </div>
 
         {/* Ad Slot #2 - Bottom */}
-        {adsSettings?.enabled &&(adsSettings?.googleAdSlotFooter || adsSettings?.googleAdClient) && (
+        {adsSettings?.enabled && (
           <div className="w-full flex flex-col items-center mt-16 overflow-hidden">
              <div className="text-center mb-4">
                 <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-400 dark:text-gray-500">Advertisement</span>
              </div>
-             <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotFooter || ''} showPlaceholder={isAdmin} />
+             {adsSettings.adsterraBannerBottom && <Adsterra code={adsSettings.adsterraBannerBottom} showPlaceholder={isAdmin} />}
+             {adsSettings.googleAdSlotFooter && adsSettings.googleAdClient && <AdSense client={adsSettings.googleAdClient} slot={adsSettings.googleAdSlotFooter} showPlaceholder={isAdmin} />}
           </div>
         )}
       </div>

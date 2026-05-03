@@ -14,6 +14,7 @@ import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 import 'swiper/css/effect-fade';
 import { AdSense } from '../components/AdSense';
+import { Adsterra } from '../components/Adsterra';
 import { SaveButton } from '../components/SaveButton';
 
 export function HomePage() {
@@ -205,9 +206,10 @@ export function HomePage() {
           </div>
         ) : (!searchTerm && !selectedCategory) ? (
           <div className="space-y-10">
-            {adsSettings?.enabled && (adsSettings?.googleAdSlotHead || adsSettings?.googleAdClient) && (
-              <div className="w-full flex justify-center overflow-hidden mb-6">
-                 <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotHead || ''} />
+            {adsSettings?.enabled && (
+              <div className="w-full flex flex-col gap-6 mb-6">
+                 {adsSettings.adsterraBannerTop && <Adsterra code={adsSettings.adsterraBannerTop} showPlaceholder={isAdmin} />}
+                 {adsSettings.googleAdSlotHead && adsSettings.googleAdClient && <AdSense client={adsSettings.googleAdClient} slot={adsSettings.googleAdSlotHead} />}
               </div>
             )}
 
@@ -262,19 +264,13 @@ export function HomePage() {
               </section>
             )}
 
-            {adsSettings?.enabled && (adsSettings?.googleAdSlotFooter || adsSettings?.googleAdClient) && (
-              <div className="w-full h-auto py-8">
-                <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotFooter || ''} format="auto" showPlaceholder={isAdmin} />
-              </div>
-            )}
-
-            {/* Extra Footer Ad Slot */}
-            {adsSettings?.enabled && (adsSettings?.googleAdSlotFooter || adsSettings?.googleAdClient) && (
-              <div className="w-full h-auto py-12 border-t border-gray-100 dark:border-white/10 mt-12">
+            {adsSettings?.enabled && (
+              <div className="w-full flex flex-col gap-6 py-12 border-t border-gray-100 dark:border-white/10 mt-12">
                 <div className="text-center mb-4">
                   <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-400 dark:text-gray-500">Advertisement</span>
                 </div>
-                <AdSense client={adsSettings.googleAdClient || ''} slot={adsSettings.googleAdSlotFooter || ''} format="auto" showPlaceholder={isAdmin} />
+                {adsSettings.adsterraBannerBottom && <Adsterra code={adsSettings.adsterraBannerBottom} showPlaceholder={isAdmin} />}
+                {adsSettings.googleAdSlotFooter && adsSettings.googleAdClient && <AdSense client={adsSettings.googleAdClient} slot={adsSettings.googleAdSlotFooter} />}
               </div>
             )}
           </div>
